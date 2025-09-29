@@ -1,8 +1,13 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { useGSAP } from "@/hooks/use-gsap"
 import { Quote } from "lucide-react"
+import useSWR from "swr"
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
+const API_URL = "https://beta.ourmanna.com/api/v1/get/?format=json"
 
 function decodeHtmlEntities(str: string) {
   if (!str) return ""
@@ -15,27 +20,13 @@ export function VerseSection() {
   const sectionRef = useRef<HTMLDivElement>(null)
   const { fadeIn } = useGSAP()
 
-  const [verseText, setVerseText] = useState("Loading Verse of the Day...")
-  const [verseRef, setVerseRef] = useState("")
+  const { data, error, isLoading } = useSWR(API_URL, fetcher, {
+    revalidateOnFocus: false, // The verse only changes daily
+  })
 
   useEffect(() => {
-    if (sectionRef.current) fadeIn(".verse-content", { delay: 0.3 })
-  }, [fadeIn])
-
-  useEffect(() => {
-    async function fetchVerse() {
-      try {
-        const res = await fetch("/api/votd")
-        const data = await res.json()
-        setVerseText(decodeHtmlEntities(data?.votd?.text || "Verse unavailable"))
-        setVerseRef(decodeHtmlEntities(data?.votd?.display_ref || ""))
-      } catch (err) {
-        console.error("Error fetching verse:", err)
-        setVerseText("Unable to load Verse of the Day")
-      }
-    }
-    fetchVerse()
-  }, [])
+    if (sectionRef.current && !isLoading) fadeIn(".verse-content", { delay: 0.3 })
+  }, [fadeIn, isLoading])
 
   return (
     <section
@@ -51,14 +42,38 @@ export function VerseSection() {
               </div>
             </div>
 
-            <blockquote className="text-2xl md:text-3xl lg:text-4xl font-medium leading-relaxed text-foreground">
-              “{verseText}”
-            </blockquote>
-
-            {verseRef && (
-              <cite className="not-italic text-lg md:text-xl text-muted-foreground font-semibold">
-                — {verseRef}
-              </cite>
+            {isLoading && (
+              <div className="space-y-6 animate-pulse">
+                <div className="h-8 bg-muted rounded-md w-full"></div>
+                <div className="h-8 bg-muted rounded-md w-3/4 mx-auto"></div>
+                <div className="h-6 bg-muted rounded-md w-1/3 mx-auto mt-4"></div>
+              </div>
+            )}
+            {error && (
+              <blockquote className="text-2xl md:text-3xl text-destructive">
+                Unable to load Verse of the Day.
+              </blockquote>
+            )}
+            {data && (
+              <>
+                {/* The API sometimes wraps the response, so we access it safely. */}
+                <blockquote className="text-2xl md:text-3xl lg:text-4xl font-medium leading-relaxed text-foreground">
+                  “
+                  {decodeHtmlEntities(
+                    data.verse?.details?.text || // Handles { verse: { details: { ... } } }
+                      data.verse?.votd?.text || // Handles { verse: { votd: { ... } } }
+                      data.votd?.text || // Handles { votd: { ... } }
+                      "Verse unavailable"
+                  )}
+                  ”
+                </blockquote>
+                <cite className="not-italic text-lg md:text-xl text-muted-foreground font-semibold">
+                  —{" "}
+                  {decodeHtmlEntities(
+                    data.verse?.details?.reference || data.verse?.votd?.display_ref || data.votd?.display_ref || ""
+                  )}
+                </cite>
+              </>
             )}
           </div>
         </div>
