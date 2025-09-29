@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 
 const aboutText = [
   "The ministry of Pastor Manoj Thomas began humbly in 2006, with a small gathering inside a seven-seater Fortuner on the outskirts of Abu Dhabi. In 2009, he was ordained as a Pastor, continuing to serve with dedication and compassion.",
-  "In January 2017, after enduring severe health issues, rejection, and financial struggles, GOD graciously opened a new chapter in his life and strengthened him to overcome these challenges. That same year, the fellowship joined World Wide Missionary Movement, Inc., headquartered in Washington D.C. and Puerto Rico—marking a season of renewal, growth, and global connection.",
+  "In January 2017, after enduring severe health issues, rejection, and financial struggles, GOD graciously opened a new chapter in his life and strengthened him to overcome these challenges. That same year, the fellowship joined World Wide Missionary Movement, Inc, headquartered in Washington D.C. and Puerto Rico—marking a season of renewal, growth, and global connection.",
   "Even during the COVID-19 pandemic, God’s presence faithfully preserved and strengthened the Church, which continued to grow in numbers.",
   "Today, Lighthouse Revival Church is known for the abiding presence of God and has flourished with services in English, Malayalam, Tamil, Hindi, as well as outreaches in several countries, carrying forward its mission of planting churches across nations and languages. People of all ages, backgrounds, and walks of life are drawn to its message of hope, making the church a shining testimony of faith, resilience, and the enduring power of God’s love.",
 ]
@@ -33,15 +33,15 @@ export default function AboutUsContent() {
           </motion.div>
 
           {/* Main Content Grid */}
-          <div className="grid md:grid-cols-5 gap-12 lg:gap-16 items-start">
+          <div className="flex flex-col md:flex-row gap-12 lg:gap-16 items-stretch">
             {/* Image Section */}
             <motion.div
-              className="md:col-span-2"
+              className="md:w-2/5 flex flex-col"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <div className="relative group w-full aspect-[3/4] max-w-sm mx-auto md:max-w-none overflow-hidden rounded-2xl shadow-lg">
+              <div className="relative group w-full h-full max-w-sm mx-auto md:max-w-none overflow-hidden rounded-2xl shadow-lg">
                 <Image
                   src="/pastor.jpg"
                   alt="Pastor Manoj"
@@ -62,7 +62,7 @@ export default function AboutUsContent() {
 
             {/* Bio Section */}
             <motion.div
-              className="md:col-span-3 space-y-6 text-lg text-muted-foreground leading-relaxed"
+              className="md:w-3/5 flex flex-col justify-center space-y-6 text-lg text-muted-foreground leading-relaxed"
               initial="hidden"
               animate="visible"
               variants={{
@@ -84,6 +84,7 @@ export default function AboutUsContent() {
                 >
                   {paragraph}
                 </motion.p>
+                
               ))}
             </motion.div>
           </div>
