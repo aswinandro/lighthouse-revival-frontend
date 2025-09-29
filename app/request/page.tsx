@@ -284,16 +284,16 @@ export default function PrayerRequestPage() {
             transition={{ duration: 1, delay: 0.3 }}
             className="mt-24 text-center max-w-4xl mx-auto space-y-6"
           >
-            <h2 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            {/* <h2 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               About Lighthouse Revival Church
-            </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            </h2> */}
+            {/* <p className="text-lg text-muted-foreground leading-relaxed">
               Lighthouse Revival Church is a place of hope, healing, and restoration. Since its
               humble beginnings in 2006, the church has grown into a vibrant community where people
               of all ages and backgrounds gather to worship, serve, and grow in faith. Under the
               leadership of Pastor Manoj, the church continues to shine as a testimony of God’s
               faithfulness and love across nations.
-            </p>
+            </p> */}
           </motion.div>
 
           {/* Footer */}
