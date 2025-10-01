@@ -37,6 +37,7 @@ export function ServicesSection() {
       font: "",
       timeKey: "services.time.english",
       contact: "+971501234567",
+      
     },
     {
       key: "tamil",

@@ -47,9 +47,10 @@ export function Navigation() {
             {/* <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105">
               <Church className="w-5 h-5 text-primary-foreground" />
             </div> */}
-            <span className="font-bold text-lg text-foreground hidden sm:block tracking-tight">
-              Lighthouse Revival
-            </span>
+            <div className="font-bold text-base sm:text-lg tracking-tight text-foreground">
+              <span className="hidden lg:inline">Lighthouse Revival</span>
+              <span className="inline lg:hidden">Lighthouse</span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
