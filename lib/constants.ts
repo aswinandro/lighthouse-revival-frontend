@@ -35,7 +35,7 @@ export const CHURCH_INFO = {
     }
   },
   transportation: {
-    locations: ["Baniyas", "Abu Dhabi City", "Shabiya", "ICAD"],
+    locations: ["Baniyas", "Mafraq", "Shabiya", "MBZ", "Church", "Mussafah", "ICAD", "Abu Dhabi City"],
     isFree: true,
   },
 }
