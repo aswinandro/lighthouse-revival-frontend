@@ -35,11 +35,21 @@ const sections = [
     text: "Therefore, if anyone is in Christ, the new creation has come: The old has gone, the new is here!",
     analogy: "Like a seed that becomes a tree, God's love transforms brokenness into beauty, despair into hope, and emptiness into purpose.",
     svg: (
-      <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <motion.rect x="50" y="60" width="20" height="20" fill="#8BC34A" initial={{ scale: 0.7, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} transition={{ duration: 1 }} />
-        <motion.circle cx="60" cy="50" r="15" fill="#4CAF50" initial={{ scale: 0.7, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} transition={{ duration: 1, delay: 0.5 }} />
-        <motion.text x="60" y="45" textAnchor="middle" fontSize="18" fill="#FFD700" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 1, delay: 1 }}>Tree</motion.text>
-      </svg>
+      <motion.div
+        initial={{ scale: 0.7, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 1 }}
+        className="flex items-center justify-center w-full h-full"
+      >
+        <img
+          src="/tree.png"
+          alt="Tree (If you see this text, the image is missing from /public)"
+          width={160}
+          height={160}
+          style={{ objectFit: 'contain', borderRadius: '24px', boxShadow: '0 4px 24px #4CAF5040' }}
+          loading="lazy"
+        />
+      </motion.div>
     ),
   },
   {
@@ -48,10 +58,21 @@ const sections = [
     text: "Suppose one of you has a hundred sheep and loses one of them. Doesn’t he leave the ninety-nine in the open country and go after the lost sheep until he finds it?",
     analogy: "God’s love chases after us, even when we run away. Like a shepherd searching for a lost sheep, He never gives up on anyone.",
     svg: (
-      <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <motion.ellipse cx="60" cy="40" rx="40" ry="25" fill="#B3E5FC" initial={{ scale: 0.7, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} transition={{ duration: 1 }} />
-        <motion.text x="60" y="45" textAnchor="middle" fontSize="18" fill="#1976D2" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 1, delay: 0.5 }}>Sheep</motion.text>
-      </svg>
+      <motion.div
+        initial={{ scale: 0.7, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 1 }}
+        className="flex items-center justify-center w-full h-full"
+      >
+        <img
+          src="/sheep.png"
+          alt="Sheep (If you see this text, the image is missing from /public)"
+          width={160}
+          height={160}
+          style={{ objectFit: 'contain', borderRadius: '24px', boxShadow: '0 4px 24px #FFD70040' }}
+          loading="lazy"
+        />
+      </motion.div>
     ),
   },
   {
