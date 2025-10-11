@@ -7,7 +7,7 @@ import Image from "next/image"
 export default function GalleryClient({ images }: { images: string[] }) {
   const [selected, setSelected] = useState<string | null>(null)
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col items-center px-2 pb-16">
+  <div className="min-h-screen bg-background text-foreground flex flex-col items-center px-2 pb-16 mt-16">
       <motion.h1
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
