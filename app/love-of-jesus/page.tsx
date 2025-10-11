@@ -171,7 +171,7 @@ export default function LoveOfJesusPage() {
           transition={{ duration: 1 }}
           className="relative flex flex-col md:flex-row items-center gap-8 bg-muted/40 rounded-2xl shadow-2xl p-8 border border-accent"
         >
-          <div className="flex-shrink-0 w-[120px] h-[80px] flex items-center justify-center">
+          <div className="flex-shrink-0 w-[120px] h-[80px] flex flex-col items-center justify-center">
             <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
               <motion.path
                 d="M20 60 Q60 10 100 60"
@@ -190,13 +190,16 @@ export default function LoveOfJesusPage() {
                 whileInView={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 1, delay: 0.5 }}
               />
-              <motion.text
-                x="60" y="75" textAnchor="middle" fontSize="16" fill="#888"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 1, delay: 1 }}
-              >Question</motion.text>
             </svg>
+            {/* Add badge below image for label */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, delay: 1 }}
+              className="mt-2 text-sm font-semibold px-4 py-1 rounded-full bg-accent text-accent-foreground shadow"
+            >
+              Question
+            </motion.div>
           </div>
           <div className="flex-1">
             <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
