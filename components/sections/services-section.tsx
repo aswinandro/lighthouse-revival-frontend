@@ -106,6 +106,9 @@ export function ServicesSection() {
                   <Clock className="w-4 h-4" />
                   <span>{t(service.timeKey)}</span>
                 </div>
+                <div className="mt-2 text-xs text-primary font-medium">
+                  Every {serviceInfo.day}
+                </div>
               </div>
             )
           })}
