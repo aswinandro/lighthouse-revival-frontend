@@ -4,11 +4,10 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 
 const aboutText = [
-  "Lighthouse Revival Church began in 2006 as a small gathering inside a 7-seater Fortuner on the outskirts of Abu Dhabi. Pastor Manoj’s journey started as a transport coordinator in a local Malayalam church, serving labor camps with compassion. His heart for missions led to the vision of building an independent church that would bless the labor community.",
-  "In January 2017, after overcoming severe health issues, rejection, and financial struggles, God gave Pastor Manoj and the church a fresh beginning. That year, Lighthouse joined the World Wide Missionary Movement, Inc., headquartered in Washington D.C. and Puerto Rico—marking a new season of growth and global connection.",
-  "By 2019, the church was renamed Lighthouse Revival following DCD’s involvement. Under this new identity, it flourished with services in English, Malayalam, Tamil, Hindi, and even outstations in Uganda, carrying forward its mission of planting churches across nations and languages.",
-  "Even during the COVID-19 pandemic, when churches worldwide stood empty, Lighthouse Revival remained steadfast. Though many members faced job losses and hardships, the church stayed united in prayer, only closing during the complete lockdown. God’s presence preserved and strengthened the congregation through those challenging times.",
-  "Today, Lighthouse Revival Church is known for its caring atmosphere, strong leadership, and vibrant community outreach. People of all ages, backgrounds, and walks of life are drawn to its message of hope. Under Pastor Manoj’s leadership and the dedication of its members, the church continues to grow—shining as a testimony of faith, resilience, and the enduring power of God’s love.",
+  "The ministry of Pastor Manoj Thomas began humbly in 2006, with a small gathering inside a seven-seater Fortuner on the outskirts of Abu Dhabi. In 2009, he was ordained as a Pastor, continuing to serve with dedication and compassion.",
+  "In January 2017, after enduring severe health issues, rejection, and financial struggles, GOD graciously opened a new chapter in his life and strengthened him to overcome these challenges. That same year, the fellowship joined World Wide Missionary Movement, Inc, headquartered in Washington D.C. and Puerto Rico—marking a season of renewal, growth, and global connection.",
+  "Even during the COVID-19 pandemic, God’s presence faithfully preserved and strengthened the Church, which continued to grow in numbers.",
+  "Today, Lighthouse Revival Church is known for the abiding presence of God and has flourished with services in English, Malayalam, Tamil, Hindi, as well as outreaches in several countries, carrying forward its mission of planting churches across nations and languages. People of all ages, backgrounds, and walks of life are drawn to its message of hope, making the church a shining testimony of faith, resilience, and the enduring power of God’s love.",
 ]
 
 export default function AboutUsContent() {
@@ -25,7 +24,7 @@ export default function AboutUsContent() {
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tighter mb-4">
               <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                Our Journey of Faith
+                A Brief History of Our Ministry
               </span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -34,17 +33,17 @@ export default function AboutUsContent() {
           </motion.div>
 
           {/* Main Content Grid */}
-          <div className="grid md:grid-cols-5 gap-12 lg:gap-16 items-start">
+          <div className="flex flex-col md:flex-row gap-12 lg:gap-16 items-stretch">
             {/* Image Section */}
             <motion.div
-              className="md:col-span-2"
+              className="md:w-2/5 flex flex-col"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <div className="relative group w-full aspect-[3/4] max-w-sm mx-auto md:max-w-none overflow-hidden rounded-2xl shadow-lg">
+              <div className="relative group w-full h-full max-w-sm mx-auto md:max-w-none overflow-hidden rounded-2xl shadow-lg">
                 <Image
-                  src="/pastor.jpg"
+                  src="/pastor1.jpg"
                   alt="Pastor Manoj"
                   fill
                   className="object-cover"
@@ -63,7 +62,7 @@ export default function AboutUsContent() {
 
             {/* Bio Section */}
             <motion.div
-              className="md:col-span-3 space-y-6 text-lg text-muted-foreground leading-relaxed"
+              className="md:w-3/5 flex flex-col justify-center space-y-6 text-lg text-muted-foreground leading-relaxed"
               initial="hidden"
               animate="visible"
               variants={{
@@ -85,6 +84,7 @@ export default function AboutUsContent() {
                 >
                   {paragraph}
                 </motion.p>
+                
               ))}
             </motion.div>
           </div>

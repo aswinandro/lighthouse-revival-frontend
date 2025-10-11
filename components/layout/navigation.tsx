@@ -21,14 +21,17 @@ export function Navigation() {
   }, [])
 
   const navItems = [
-    { key: "nav.home", href: "/" },
+    { key: "nav.home", href: "/love-of-jesus" },
+    { key: "nav.contact", href: "/request" },
+  ];
+  const moreItems = [
     { key: "nav.about", href: "/about" },
+    { key: "nav.gallery", href: "/gallery" },
     { key: "nav.donate", href: "/welfare" },
     { key: "nav.services", href: "/#services" },
     { key: "nav.events", href: "/#events" },
-    { key: "nav.contact", href: "/request" },
     { key: "nav.livetv", href: "/livetv" },
-  ]
+  ];
 
   return (
     <nav
@@ -44,12 +47,13 @@ export function Navigation() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105">
+            {/* <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105">
               <Church className="w-5 h-5 text-primary-foreground" />
+            </div> */}
+            <div className="font-bold text-base sm:text-lg tracking-tight text-foreground">
+              <span className="hidden lg:inline">Lighthouse Revival</span>
+              <span className="inline lg:hidden">Lighthouse</span>
             </div>
-            <span className="font-bold text-lg text-foreground hidden sm:block tracking-tight">
-              Lighthouse Revival
-            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -64,6 +68,23 @@ export function Navigation() {
                 <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-primary transition-all group-hover:w-full"></span>
               </Link>
             ))}
+            {/* More dropdown */}
+            <div className="relative group">
+              <Button variant="ghost" className="text-sm font-medium px-2 py-1">
+                {t("nav.more")}
+              </Button>
+              <div className="absolute left-0 mt-2 min-w-[160px] bg-background border border-border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                {moreItems.map((item) => (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-lg transition-colors"
+                  >
+                    {t(item.key)}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Language Selector & Mobile Menu */}
@@ -71,7 +92,7 @@ export function Navigation() {
             <LanguageSelector />
             <div className="hidden sm:flex">
               <Button asChild variant="ghost" className="hover:bg-primary/10">
-                <Link href="/sign-in">{t("nav.signin")}</Link>
+                <Link href="/login">{t("nav.signin")}</Link>
               </Button>
             </div>
 
@@ -108,9 +129,25 @@ export function Navigation() {
                     {t(item.key)}
                   </Link>
                 ))}
+                {/* More collapsible section */}
+                <details className="mt-2">
+                  <summary className="cursor-pointer px-3 py-2 rounded-lg text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors">{t("nav.more")}</summary>
+                  <div className="pl-2">
+                    {moreItems.map((item) => (
+                      <Link
+                        key={item.key}
+                        href={item.href}
+                        className="block px-3 py-2 rounded-lg text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {t(item.key)}
+                      </Link>
+                    ))}
+                  </div>
+                </details>
                 <div className="pt-4 border-t border-border/50">
                   <Button asChild className="w-full rounded-lg shadow-md">
-                    <Link href="/sign-in">{t("nav.signin")}</Link>
+                    <Link href="/login">{t("nav.signin")}</Link>
                   </Button>
                 </div>
               </div>

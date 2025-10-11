@@ -9,33 +9,33 @@ export const CHURCH_INFO = {
   },
   services: {
     english: {
-      time: "12:30pm to 2:30pm",
+      time: "Sunday 12:30pm to 2:30pm",
       day: "Sunday",
       location: "G2 Hall at Brethren Church Center, Abu Dhabi",
     },
     tamil: {
-      time: "3:00pm to 5:00pm",
-      day: "Sunday",
+      time: "Saturday 3:00pm to 5:00pm",
+      day: "Saturday",
       location: "G2 Hall at Brethren Church Center, Abu Dhabi",
     },
     hindi: {
-      time: "4:30pm to 6:00pm",
+      time: "Saturday 4:30pm to 6:00pm",
       day: "Saturday",
       location: "Elohim Hall, Mussafah, Abu Dhabi",
     },
     malayalam: {
-      time: "3:00pm to 5:00pm",
+      time: "Sunday 3:00pm to 5:00pm",
       day: "Sunday",
       location: "G2 Hall at Brethren Church Center, Abu Dhabi",
     },
      urdu: {
-      time: "4:30pm to 6:00pm",
+      time: "Saturday 4:30pm to 6:00pm",
       day: "Saturday",
       location: "Elohim Hall, Mussafah, Abu Dhabi",
     }
   },
   transportation: {
-    locations: ["Baniyas", "Abu Dhabi City", "Shabiya", "ICAD"],
+    locations: ["Baniyas", "Mafraq", "Shabiya", "MBZ", "Lighthouse", "Mussafah", "ICAD", "Abu Dhabi City"],
     isFree: true,
   },
 }

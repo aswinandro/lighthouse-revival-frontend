@@ -4,7 +4,36 @@ import Image from "next/image"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
+import { Label } from "@/components/ui/label" // Assuming you have this component
 
+// Data for church contacts
+const churchContacts = [
+  {
+    name: "Aneesha Munni",
+    language: "Hindi",
+    mobile: "+971543655672",
+  },
+   {
+    name: "Ashwin Kirupa",
+    language: "Tamil",
+    mobile: "+971566434774", // Ensure numbers are in international format for WhatsApp
+  },
+  {
+    name: "Shemi Mahfouz Khan",
+    language: "English",
+    mobile: "+971553262556",
+  },
+  {
+    name: "Gloria Ranjith",
+    language: "Malayalam",
+    mobile: "+971543791303",
+  },
+  {
+    name: "General Contact", // For a general or "Other" option
+    language: "Other",
+    mobile: "+971524514800", // Using a general contact number
+  },
+]
 export default function PrayerRequestPage() {
   const { toast } = useToast()
   const [form, setForm] = useState({
@@ -15,8 +44,10 @@ export default function PrayerRequestPage() {
   })
   const [loading, setLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false) // New state to track successful submission
-
-  const whatsappNumber = "+971503748678" // 👉 Replace with Church WhatsApp number
+  const [selectedLanguage, setSelectedLanguage] = useState("")
+  const [selectedChurchInfo, setSelectedChurchInfo] = useState<
+    (typeof churchContacts)[0] | null
+  >(null)
 
   // Update form state
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -64,10 +95,34 @@ export default function PrayerRequestPage() {
     }
   }
 
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const lang = e.target.value
+    setSelectedLanguage(lang)
+    const church = churchContacts.find((c) => c.language === lang)
+    setSelectedChurchInfo(church || null)
+  }
+
   // Send via WhatsApp
   const handleWhatsApp = () => {
+    if (!form.name || !form.email || !form.phone || !form.message) {
+      toast({
+        title: "📝 All fields are required",
+        description: "Please fill out all fields to send your prayer request via WhatsApp.",
+        variant: "destructive",
+      })
+      return
+    }
+    if (!selectedChurchInfo?.mobile) {
+      toast({
+        title: "⚠️ Select a Contact",
+        description: "Please select a church leader to send your prayer request via WhatsApp.",
+        variant: "destructive",
+      })
+      return
+    }
     const message = `🙏 Prayer Request - From Web\n\nName: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\n\nMessage:\n${form.message}`
-    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`
+    const cleanMobile = selectedChurchInfo.mobile.replace(/\D/g, "") // Remove non-digits
+    const url = `https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`
     window.open(url, "_blank")
   }
 
@@ -143,6 +198,7 @@ export default function PrayerRequestPage() {
                     value={form.email}
                     onChange={handleChange}
                     className="p-3 rounded-lg border border-border bg-background"
+                    required
                   />
                   <input
                     type="tel"
@@ -151,6 +207,7 @@ export default function PrayerRequestPage() {
                     value={form.phone}
                     onChange={handleChange}
                     className="p-3 rounded-lg border border-border bg-background"
+                    required
                   />
                   <textarea
                     name="message"
@@ -160,6 +217,41 @@ export default function PrayerRequestPage() {
                     className="p-3 rounded-lg border border-border bg-background h-32 resize-none"
                     required
                   />
+
+                  {/* Dropdown for Church Leader Selection */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="church-language" className="text-sm font-medium text-foreground">
+                      Send to Church Leader
+                    </Label>
+                    <select
+                      id="church-language"
+                      value={selectedLanguage}
+                      onChange={handleLanguageChange}
+                      className="p-3 rounded-lg border border-border bg-background text-foreground"
+                    >
+                      <option value="">Select Church</option>
+                      {churchContacts.map((contact) => (
+                        <option key={contact.language} value={contact.language}>
+                          {contact.language} ({contact.name})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedChurchInfo && (
+                    <div className="grid gap-2 p-3 rounded-lg border border-border bg-background">
+                      <p className="text-sm text-muted-foreground">
+                        Selected Contact:
+                      </p>
+                      <p className="font-medium text-foreground">
+                        {selectedChurchInfo.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Mobile:</p>
+                      <p className="font-medium text-foreground">
+                        {selectedChurchInfo.mobile}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 mt-4">
@@ -172,6 +264,7 @@ export default function PrayerRequestPage() {
                     </button>
                     <button
                       type="button"
+                      disabled={!selectedChurchInfo} // Disable if no leader is selected
                       onClick={handleWhatsApp}
                       className="flex-1 py-3 px-6 rounded-xl bg-green-600 text-white hover:bg-green-700 transition"
                     >
@@ -190,16 +283,16 @@ export default function PrayerRequestPage() {
             transition={{ duration: 1, delay: 0.3 }}
             className="mt-24 text-center max-w-4xl mx-auto space-y-6"
           >
-            <h2 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            {/* <h2 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               About Lighthouse Revival Church
-            </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            </h2> */}
+            {/* <p className="text-lg text-muted-foreground leading-relaxed">
               Lighthouse Revival Church is a place of hope, healing, and restoration. Since its
               humble beginnings in 2006, the church has grown into a vibrant community where people
               of all ages and backgrounds gather to worship, serve, and grow in faith. Under the
               leadership of Pastor Manoj, the church continues to shine as a testimony of God’s
               faithfulness and love across nations.
-            </p>
+            </p> */}
           </motion.div>
 
           {/* Footer */}

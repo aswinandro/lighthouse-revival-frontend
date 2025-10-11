@@ -149,20 +149,27 @@ export function TransportationSection() {
               </filter>
             </defs>
 
-            {/* Road */}
+            {/* Realistic Road: main road + dashed lane divider */}
             <path
               ref={pathRef}
               d="M 40 150 Q 250 40, 500 150 T 960 150"
-              stroke="url(#roadGradient)"
-              strokeWidth="6"
+              stroke="#222"
+              strokeWidth="14"
               fill="none"
               strokeLinecap="round"
-              strokeDasharray="12 10"
+              opacity="0.7"
+            />
+            <path
+              d="M 40 150 Q 250 40, 500 150 T 960 150"
+              stroke="url(#roadGradient)"
+              strokeWidth="4"
+              fill="none"
+              strokeDasharray="16 12"
               filter="url(#glow)"
-              opacity="0.9"
+              opacity="0.95"
             />
 
-            {/* Points */}
+            {/* Realistic Points: add pin icon and glow */}
             <g>
               {points.map((p, idx) => (
                 <g
@@ -176,27 +183,35 @@ export function TransportationSection() {
                     )
                   }}
                 >
-                  <circle cx={p.x} cy={p.y} r="8" className="animate-ping" fill="rgba(14,165,233,0.25)" />
-                  <circle cx={p.x} cy={p.y} r="4" fill="var(--primary)" />
-                  <line x1={p.x} y1={p.y} x2={p.lx} y2={p.ly} stroke="var(--primary)" strokeOpacity="0.45" strokeWidth="2" />
-
+                  {/* Pin shadow */}
+                  <ellipse cx={p.x} cy={p.y + 10} rx={7} ry={3} fill="rgba(0,0,0,0.18)" />
+                  {/* Pin icon */}
+                  <g>
+                    <circle cx={p.x} cy={p.y} r={7} fill="#fff" stroke="var(--primary)" strokeWidth="2" filter="url(#glow)" />
+                    <circle cx={p.x} cy={p.y} r={3} fill="var(--primary)" />
+                  </g>
+                  {/* Label connector */}
+                  <line x1={p.x} y1={p.y} x2={p.lx} y2={p.ly} stroke="var(--primary)" strokeOpacity="0.45" strokeWidth={2} />
+                  {/* Label box */}
                   <g transform={`translate(${p.lx}, ${p.ly})`}>
                     <rect
                       x={-p.w / 2}
                       y={-14}
-                      rx="8"
-                      ry="8"
+                      rx={8}
+                      ry={8}
                       width={p.w}
-                      height="28"
-                      fill="rgba(30,30,30,0.85)" // darker background
+                      height={28}
+                      fill="rgba(30,30,30,0.92)"
                       stroke="var(--primary)"
                       strokeOpacity="0.2"
+                      filter="url(#glow)"
                     />
                     <text
                       textAnchor="middle"
                       alignmentBaseline="middle"
-                      fontSize="12"
+                      fontSize={13}
                       fill="#fff"
+                      fontWeight="bold"
                     >
                       {p.label}
                     </text>
@@ -205,16 +220,23 @@ export function TransportationSection() {
               ))}
             </g>
 
-            {/* Bus */}
+            {/* Realistic Bus: shadow, wheels, body */}
             <g ref={busRef} className="drop-shadow">
-              <ellipse cx="0" cy="12" rx="12" ry="4" fill="rgba(0,0,0,0.15)" />
+              <ellipse cx="0" cy="18" rx="14" ry="5" fill="rgba(0,0,0,0.18)" />
               <g transform="scale(1)">
-                <path
-                  d="M4 16c0 1.1.9 2 2 2v2c0 .6.4 1 1 1h1c.6 0 1-.4 1-1v-2h6v2c0 .6.4 1 1 1h1c.6 0 1-.4 1-1v-2c1.1 0 2-.9 2-2V6c0-3-2.7-4-10-4S4 3 4 6v10zm2-6h12v2H6v-2zm0-4h12v2H6V6z"
-                  fill="var(--primary)"
-                />
-                <circle cx="7" cy="20" r="2" fill="var(--foreground)" />
-                <circle cx="17" cy="20" r="2" fill="var(--foreground)" />
+                {/* Bus body */}
+                <rect x="-10" y="0" width="40" height="18" rx="7" fill="#ffe066" stroke="#222" strokeWidth="2" />
+                {/* Windows */}
+                <rect x="-6" y="4" width="10" height="7" rx="2" fill="#fff" />
+                <rect x="6" y="4" width="10" height="7" rx="2" fill="#fff" />
+                {/* Door */}
+                <rect x="18" y="4" width="6" height="10" rx="1.5" fill="#fff" />
+                {/* Wheels */}
+                <circle cx="2" cy="18" r="3" fill="#222" />
+                <circle cx="28" cy="18" r="3" fill="#222" />
+                {/* Headlights */}
+                <circle cx="-8" cy="8" r="1.5" fill="#ffd700" />
+                <circle cx="30" cy="8" r="1.5" fill="#ffd700" />
               </g>
             </g>
           </svg>

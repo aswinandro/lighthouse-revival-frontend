@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useLanguage } from "@/components/providers/language-provider"
 import { useGSAP } from "@/hooks/use-gsap"
 
 import { Button } from "@/components/ui/button"
@@ -15,9 +16,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export default function SignupPage() {
+export default function LoginPage() {
   const cardRef = useRef<HTMLDivElement>(null)
   const { fadeIn } = useGSAP()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (cardRef.current) {
@@ -25,63 +27,47 @@ export default function SignupPage() {
     }
   }, [fadeIn])
 
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Handle signup logic here
-    console.log("Signup attempt with:", { firstName, lastName, email, password })
+    // TODO: Handle login logic here
+    console.log("Login attempt with:", { email, password })
   }
 
   return (
     <section className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card ref={cardRef} className="mx-auto w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Sign Up</CardTitle>
+          <CardTitle className="text-2xl">{t("login.title")}</CardTitle>
           <CardDescription>
-            Enter your information to create an account
+            {t("login.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="first-name">First name</Label>
-                <Input
-                  id="first-name"
-                  placeholder="Max"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="last-name">Last name</Label>
-                <Input
-                  id="last-name"
-                  placeholder="Robinson"
-                  required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("login.emailLabel")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder={t("login.emailPlaceholder")}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center">
+                <Label htmlFor="password">{t("login.passwordLabel")}</Label>
+                <Link
+                  href="#"
+                  className="ms-auto inline-block text-sm underline"
+                >
+                  {t("login.forgotPassword")}
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -91,16 +77,16 @@ export default function SignupPage() {
               />
             </div>
             <Button type="submit" className="w-full">
-              Create an account
+              {t("login.loginButton")}
             </Button>
             <Button variant="outline" className="w-full">
-              Sign up with Google
+              {t("login.googleButton")}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
-            <Link href="/login" className="underline">
-              Login
+            {t("login.noAccount")}{" "}
+            <Link href="/signup" className="underline">
+              {t("login.signUpLink")}
             </Link>
           </div>
         </CardContent>
@@ -108,4 +94,3 @@ export default function SignupPage() {
     </section>
   )
 }
-

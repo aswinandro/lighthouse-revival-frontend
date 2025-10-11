@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useLanguage } from "@/components/providers/language-provider"
 import { useGSAP } from "@/hooks/use-gsap"
 
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ import { Label } from "@/components/ui/label"
 export default function SignupPage() {
   const cardRef = useRef<HTMLDivElement>(null)
   const { fadeIn } = useGSAP()
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (cardRef.current) {
@@ -40,29 +42,29 @@ export default function SignupPage() {
     <section className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card ref={cardRef} className="mx-auto w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Sign Up</CardTitle>
+          <CardTitle className="text-xl">{t("signup.title")}</CardTitle>
           <CardDescription>
-            Enter your information to create an account
+            {t("signup.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="first-name">First name</Label>
+                <Label htmlFor="first-name">{t("signup.firstNameLabel")}</Label>
                 <Input
                   id="first-name"
-                  placeholder="Max"
+                  placeholder={t("signup.firstNamePlaceholder")}
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="last-name">Last name</Label>
+                <Label htmlFor="last-name">{t("signup.lastNameLabel")}</Label>
                 <Input
                   id="last-name"
-                  placeholder="Robinson"
+                  placeholder={t("signup.lastNamePlaceholder")}
                   required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
@@ -70,18 +72,18 @@ export default function SignupPage() {
               </div>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("signup.emailLabel")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder={t("signup.emailPlaceholder")}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("signup.passwordLabel")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -91,16 +93,16 @@ export default function SignupPage() {
               />
             </div>
             <Button type="submit" className="w-full">
-              Create an account
+              {t("signup.createButton")}
             </Button>
             <Button variant="outline" className="w-full">
-              Sign up with Google
+              {t("signup.googleButton")}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
+            {t("signup.haveAccount")}{" "}
             <Link href="/login" className="underline">
-              Login
+              {t("signup.loginLink")}
             </Link>
           </div>
         </CardContent>
@@ -108,4 +110,3 @@ export default function SignupPage() {
     </section>
   )
 }
-

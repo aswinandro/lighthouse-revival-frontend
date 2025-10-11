@@ -37,6 +37,7 @@ export function ServicesSection() {
       font: "",
       timeKey: "services.time.english",
       contact: "+971501234567",
+      
     },
     {
       key: "tamil",
@@ -104,6 +105,9 @@ export function ServicesSection() {
                 <div className="flex justify-center items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="w-4 h-4" />
                   <span>{t(service.timeKey)}</span>
+                </div>
+                <div className="mt-2 text-xs text-primary font-medium">
+                  Every {serviceInfo.day}
                 </div>
               </div>
             )
