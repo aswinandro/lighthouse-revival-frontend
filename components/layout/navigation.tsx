@@ -22,14 +22,16 @@ export function Navigation() {
 
   const navItems = [
     { key: "nav.home", href: "/love-of-jesus" },
+    { key: "nav.contact", href: "/request" },
+  ];
+  const moreItems = [
     { key: "nav.about", href: "/about" },
     { key: "nav.gallery", href: "/gallery" },
     { key: "nav.donate", href: "/welfare" },
     { key: "nav.services", href: "/#services" },
     { key: "nav.events", href: "/#events" },
-    { key: "nav.contact", href: "/request" },
     { key: "nav.livetv", href: "/livetv" },
-  ]
+  ];
 
   return (
     <nav
@@ -66,6 +68,23 @@ export function Navigation() {
                 <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-primary transition-all group-hover:w-full"></span>
               </Link>
             ))}
+            {/* More dropdown */}
+            <div className="relative group">
+              <Button variant="ghost" className="text-sm font-medium px-2 py-1">
+                {t("nav.more")}
+              </Button>
+              <div className="absolute left-0 mt-2 min-w-[160px] bg-background border border-border rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                {moreItems.map((item) => (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-lg transition-colors"
+                  >
+                    {t(item.key)}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Language Selector & Mobile Menu */}
@@ -110,6 +129,22 @@ export function Navigation() {
                     {t(item.key)}
                   </Link>
                 ))}
+                {/* More collapsible section */}
+                <details className="mt-2">
+                  <summary className="cursor-pointer px-3 py-2 rounded-lg text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors">{t("nav.more")}</summary>
+                  <div className="pl-2">
+                    {moreItems.map((item) => (
+                      <Link
+                        key={item.key}
+                        href={item.href}
+                        className="block px-3 py-2 rounded-lg text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {t(item.key)}
+                      </Link>
+                    ))}
+                  </div>
+                </details>
                 <div className="pt-4 border-t border-border/50">
                   <Button asChild className="w-full rounded-lg shadow-md">
                     <Link href="/login">{t("nav.signin")}</Link>
