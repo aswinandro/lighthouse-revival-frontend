@@ -21,7 +21,7 @@ export function Navigation() {
   }, [])
 
   const navItems = [
-    { key: "nav.home", href: "/" },
+  { key: "nav.home", href: "/love-of-jesus" },
     { key: "nav.about", href: "/about" },
     { key: "nav.donate", href: "/welfare" },
     { key: "nav.services", href: "/#services" },
