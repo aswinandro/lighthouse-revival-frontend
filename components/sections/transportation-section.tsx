@@ -127,12 +127,12 @@ export function TransportationSection() {
         </div>
 
         {/* Map */}
-        <div className="relative w-full h-[220px] sm:h-[320px] md:h-[420px] rounded-2xl overflow-hidden shadow-inner bg-gradient-to-br from-primary/10 via-background to-accent/10">
+        <div className="relative w-full h-[320px] sm:h-[360px] md:h-[420px] rounded-2xl overflow-hidden shadow-inner bg-gradient-to-br from-primary/10 via-background to-accent/10">
           <svg
             ref={svgRef}
             viewBox="0 0 1000 220"
             className="absolute inset-0 w-full h-full"
-            preserveAspectRatio="none"
+            preserveAspectRatio="xMidYMid meet"
           >
             <defs>
               <linearGradient id="roadGradient" x1="0" y1="0" x2="1" y2="0">
@@ -184,23 +184,23 @@ export function TransportationSection() {
                   }}
                 >
                   {/* Pin shadow */}
-                  <ellipse cx={p.x} cy={p.y + (window.innerWidth < 640 ? 7 : 10)} rx={window.innerWidth < 640 ? 5 : 7} ry={window.innerWidth < 640 ? 2 : 3} fill="rgba(0,0,0,0.18)" />
+                  <ellipse cx={p.x} cy={p.y + 10} rx={7} ry={3} fill="rgba(0,0,0,0.18)" />
                   {/* Pin icon */}
                   <g>
-                    <circle cx={p.x} cy={p.y} r={window.innerWidth < 640 ? 5 : 7} fill="#fff" stroke="var(--primary)" strokeWidth="2" filter="url(#glow)" />
-                    <circle cx={p.x} cy={p.y} r={window.innerWidth < 640 ? 2 : 3} fill="var(--primary)" />
+                    <circle cx={p.x} cy={p.y} r={7} fill="#fff" stroke="var(--primary)" strokeWidth="2" filter="url(#glow)" />
+                    <circle cx={p.x} cy={p.y} r={3} fill="var(--primary)" />
                   </g>
                   {/* Label connector */}
-                  <line x1={p.x} y1={p.y} x2={p.lx} y2={p.ly} stroke="var(--primary)" strokeOpacity="0.45" strokeWidth={window.innerWidth < 640 ? 1 : 2} />
+                  <line x1={p.x} y1={p.y} x2={p.lx} y2={p.ly} stroke="var(--primary)" strokeOpacity="0.45" strokeWidth={2} />
                   {/* Label box */}
                   <g transform={`translate(${p.lx}, ${p.ly})`}>
                     <rect
                       x={-p.w / 2}
-                      y={window.innerWidth < 640 ? -10 : -14}
-                      rx={window.innerWidth < 640 ? 5 : 8}
-                      ry={window.innerWidth < 640 ? 5 : 8}
+                      y={-14}
+                      rx={8}
+                      ry={8}
                       width={p.w}
-                      height={window.innerWidth < 640 ? 20 : 28}
+                      height={28}
                       fill="rgba(30,30,30,0.92)"
                       stroke="var(--primary)"
                       strokeOpacity="0.2"
@@ -209,7 +209,7 @@ export function TransportationSection() {
                     <text
                       textAnchor="middle"
                       alignmentBaseline="middle"
-                      fontSize={window.innerWidth < 640 ? 10 : 13}
+                      fontSize={13}
                       fill="#fff"
                       fontWeight="bold"
                     >
