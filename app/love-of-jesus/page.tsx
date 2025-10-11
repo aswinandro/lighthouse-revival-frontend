@@ -155,7 +155,7 @@ export default function LoveOfJesusPage() {
           transition={{ duration: 1 }}
           className="text-center"
         >
-          <h1 className="text-6xl font-extrabold mb-6 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
+          <h1 className="text-6xl font-extrabold mb-6 mt-16 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 bg-clip-text text-transparent">
             The Love of Jesus
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
