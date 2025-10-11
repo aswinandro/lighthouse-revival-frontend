@@ -121,10 +121,9 @@ export default function PrayerRequestPage() {
       return
     }
     const message = `🙏 Prayer Request - From Web\n\nName: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\n\nMessage:\n${form.message}`
-    const url = `https://wa.me/${selectedChurchInfo}?text=${encodeURIComponent(message)}`
-    window.open(url, "_blank")
     const cleanMobile = selectedChurchInfo.mobile.replace(/\D/g, "") // Remove non-digits
-    window.open(`https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`, "_blank")
+    const url = `https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`
+    window.open(url, "_blank")
   }
 
   return (
