@@ -43,7 +43,7 @@ export default function AboutUsContent() {
             >
               <div className="relative group w-full h-full max-w-sm mx-auto md:max-w-none overflow-hidden rounded-2xl shadow-lg">
                 <Image
-                  src="/pastor.jpg"
+                  src="/pastor1.jpg"
                   alt="Pastor Manoj"
                   fill
                   className="object-cover"
