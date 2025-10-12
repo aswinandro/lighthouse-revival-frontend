@@ -12,15 +12,22 @@ export default function GalleryClient() {
   const loadMoreRef = React.useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    // Fetch image list from API route
+    console.log("Fetching gallery images from /api/gallery-files...");
     fetch("/api/gallery-files")
-      .then((res) => res.json())
-      .then((data) => {
-        setImages(data.images || [])
-        setLoading(false)
+      .then((res) => {
+        console.log("API response status:", res.status);
+        return res.json();
       })
-      .catch(() => setLoading(false))
-  }, [])
+      .then((data) => {
+        console.log("Fetched images:", data.images);
+        setImages(data.images || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching gallery images:", err);
+        setLoading(false);
+      });
+  }, []);
 
   // Infinite scroll: load more images when the sentinel is visible
   useEffect(() => {
@@ -57,23 +64,30 @@ export default function GalleryClient() {
       ) : (
         <>
           <div className="w-full max-w-5xl mx-auto columns-2 sm:columns-3 md:columns-4 gap-4 space-y-4">
-            {images.slice(0, visibleCount).map((img, idx) => (
-              <motion.div
-                key={img}
-                whileHover={{ scale: 1.03 }}
-                className="mb-4 break-inside-avoid rounded-xl overflow-hidden shadow-lg cursor-pointer group"
-                onClick={() => setSelected(img)}
-              >
-                <img
-                  src={`/assets/gallery/${img}`}
-                  alt={`Gallery photo ${idx + 1}`}
-                  className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                  style={{ borderRadius: '0.75rem', display: 'block' }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </motion.div>
-            ))}
+            {images.slice(0, visibleCount).map((img, idx) => {
+              console.log("Rendering image:", img);
+              return (
+                <motion.div
+                  key={img}
+                  whileHover={{ scale: 1.03 }}
+                  className="mb-4 break-inside-avoid rounded-xl overflow-hidden shadow-lg cursor-pointer group"
+                  onClick={() => {
+                    console.log("Selected image:", img);
+                    setSelected(img);
+                  }}
+                >
+                  <img
+                    src={`/assets/gallery/${img}`}
+                    alt={`Gallery photo ${idx + 1}`}
+                    className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    style={{ borderRadius: '0.75rem', display: 'block' }}
+                    onError={() => console.error("Image failed to load:", img)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </motion.div>
+              );
+            })}
           </div>
           {/* Sentinel for infinite scroll */}
           {visibleCount < images.length && (
