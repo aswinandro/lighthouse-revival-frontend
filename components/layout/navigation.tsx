@@ -119,7 +119,7 @@ export function Navigation() {
               className="md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 rounded-b-xl shadow-lg overflow-hidden"
             >
               <div className="px-4 pt-4 pb-6 space-y-2">
-                {navItems.map((item) => (
+                {[...navItems, ...moreItems].map((item) => (
                   <Link
                     key={item.key}
                     href={item.href}
@@ -129,22 +129,6 @@ export function Navigation() {
                     {t(item.key)}
                   </Link>
                 ))}
-                {/* More collapsible section */}
-                <details className="mt-2">
-                  <summary className="cursor-pointer px-3 py-2 rounded-lg text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors">{t("nav.more")}</summary>
-                  <div className="pl-2">
-                    {moreItems.map((item) => (
-                      <Link
-                        key={item.key}
-                        href={item.href}
-                        className="block px-3 py-2 rounded-lg text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {t(item.key)}
-                      </Link>
-                    ))}
-                  </div>
-                </details>
                 <div className="pt-4 border-t border-border/50">
                   <Button asChild className="w-full rounded-lg shadow-md">
                     <Link href="/login">{t("nav.signin")}</Link>
