@@ -5,7 +5,9 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { LanguageSelector } from "@/components/ui/language-selector"
+import { ChurchSelector } from "@/components/ui/church-selector"
 import { useLanguage } from "@/components/providers/language-provider"
+import { useChurch } from "@/components/providers/church-context"
 import {
   LayoutDashboard,
   Users,
@@ -19,6 +21,9 @@ import {
   Menu,
   X,
   LogOut,
+  Building2,
+  FileText,
+  Mail,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -31,17 +36,39 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, activeTab, onTabChange }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { isRTL } = useLanguage()
+  const { userRole } = useChurch()
 
   const navigationItems = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
-    { id: "members", label: "Members", icon: Users },
-    { id: "newcomers", label: "Newcomers", icon: UserPlus },
-    { id: "attendance", label: "Attendance", icon: BarChart3 },
-    { id: "courses", label: "Courses", icon: BookOpen },
-    { id: "events", label: "Events", icon: Calendar },
-    { id: "prayers", label: "Prayer Requests", icon: MessageSquare },
-    { id: "ministries", label: "Ministries", icon: Church },
+    {
+      id: "overview",
+      label: "Overview",
+      icon: LayoutDashboard,
+      roles: ["super_admin", "church_pastor", "church_leader", "church_believer"],
+    },
+    { id: "members", label: "Members", icon: Users, roles: ["super_admin", "church_pastor", "church_leader"] },
+    { id: "newcomers", label: "Newcomers", icon: UserPlus, roles: ["super_admin", "church_pastor", "church_leader"] },
+    {
+      id: "attendance",
+      label: "Attendance",
+      icon: BarChart3,
+      roles: ["super_admin", "church_pastor", "church_leader"],
+    },
+    { id: "courses", label: "Courses", icon: BookOpen, roles: ["super_admin", "church_pastor", "church_leader"] },
+    { id: "events", label: "Events", icon: Calendar, roles: ["super_admin", "church_pastor", "church_leader"] },
+    {
+      id: "prayers",
+      label: "Prayer Requests",
+      icon: MessageSquare,
+      roles: ["super_admin", "church_pastor", "church_leader"],
+    },
+    { id: "ministries", label: "Ministries", icon: Church, roles: ["super_admin", "church_pastor", "church_leader"] },
+    { id: "churches", label: "Churches", icon: Building2, roles: ["super_admin"] },
+    { id: "schedules", label: "Preaching Schedules", icon: Calendar, roles: ["super_admin", "church_pastor"] },
+    { id: "reports", label: "Weekly Reports", icon: FileText, roles: ["super_admin", "church_pastor"] },
+    { id: "email-config", label: "Email Config", icon: Mail, roles: ["super_admin"] },
   ]
+
+  const filteredNavItems = navigationItems.filter((item) => item.roles.includes(userRole))
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,8 +112,8 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2">
-              {navigationItems.map((item) => {
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+              {filteredNavItems.map((item) => {
                 const IconComponent = item.icon
                 return (
                   <Button
@@ -142,7 +169,10 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
               <h2 className="text-2xl font-bold capitalize">{activeTab}</h2>
               <p className="text-muted-foreground">Manage your church {activeTab}</p>
             </div>
-            <LanguageSelector />
+            <div className="flex items-center gap-3">
+              <ChurchSelector />
+              <LanguageSelector />
+            </div>
           </div>
 
           {/* Content */}

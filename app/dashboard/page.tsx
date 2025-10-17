@@ -10,6 +10,10 @@ import { CoursesManagement } from "@/components/dashboard/courses-management"
 import { EventsManagement } from "@/components/dashboard/events-management"
 import { PrayerRequestsManagement } from "@/components/dashboard/prayer-requests-management"
 import { MinistriesManagement } from "@/components/dashboard/ministries-management"
+import { ChurchesManagement } from "@/components/dashboard/churches-management"
+import { PreachingSchedulesManagement } from "@/components/dashboard/preaching-schedules-management"
+import { WeeklyReportsManagement } from "@/components/dashboard/weekly-reports-management"
+import { EmailConfigManagement } from "@/components/dashboard/email-config-management"
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview")
@@ -32,6 +36,14 @@ export default function DashboardPage() {
         return <PrayerRequestsManagement />
       case "ministries":
         return <MinistriesManagement />
+      case "churches":
+        return <ChurchesManagement />
+      case "schedules":
+        return <PreachingSchedulesManagement />
+      case "reports":
+        return <WeeklyReportsManagement />
+      case "email-config":
+        return <EmailConfigManagement />
       default:
         return <DashboardOverview />
     }
