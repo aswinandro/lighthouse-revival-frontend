@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { LanguageProvider } from "@/components/providers/language-provider"
 import { Navigation } from "@/components/layout/navigation"
 import { Footer } from "@/components/layout/footer"
+import { ChurchProvider } from "@/components/providers/church-context"
 
 const geist = Geist({
   subsets: ["latin"],
@@ -146,9 +147,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider>
-            <Navigation />
-            <main className="flex-grow">{children}</main>
-            <Footer />
+            {/* ChurchProvider added here */}
+            <ChurchProvider>
+              <Navigation />
+              <main className="flex-grow">{children}</main>
+              <Footer />
+            </ChurchProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

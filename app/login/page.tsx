@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useLanguage } from "@/components/providers/language-provider"
 import { useGSAP } from "@/hooks/use-gsap"
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 export default function LoginPage() {
+  const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null)
   const { fadeIn } = useGSAP()
   const { t } = useLanguage()
@@ -30,10 +32,32 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Handle login logic here
-    console.log("Login attempt with:", { email, password })
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Login form submitted", { email, password });
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+      console.log("API base URL:", apiBase);
+      const res = await fetch(`${apiBase}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      console.log("Login response status:", res.status);
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Login success, response data:", data);
+        localStorage.setItem("token", data.token || data.accessToken);
+        router.push("/dashboard");
+      } else {
+        const errorText = await res.text();
+        console.error("Login failed, backend response:", errorText);
+        alert("Invalid credentials");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("Login failed. Please try again.");
+    }
   }
 
   return (
