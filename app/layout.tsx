@@ -127,6 +127,7 @@ export default function RootLayout({
     },
   ]
 
+
   return (
     <html
       lang="en"
@@ -147,11 +148,8 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider>
-            {/* ChurchProvider added here */}
             <ChurchProvider>
-              <Navigation />
               <main className="flex-grow">{children}</main>
-              <Footer />
             </ChurchProvider>
           </LanguageProvider>
         </ThemeProvider>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { LanguageSelector } from "@/components/ui/language-selector"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -10,15 +11,29 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 
 export function Navigation() {
+
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const { t, isRTL } = useLanguage()
+  const pathname = usePathname()
 
+  // Only check login state on mount, and only update if changed
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
     window.addEventListener("scroll", handleScroll)
+    // Only set state if value changes
+    const hasAuth = Boolean(document.cookie.match(/(token|session|auth)/i))
+    setIsLoggedIn((prev) => prev !== hasAuth ? hasAuth : prev)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Hide navigation on dashboard, login, or if logged in
+  const shouldShowNav =
+    !(pathname && (pathname.startsWith("/dashboard") || pathname.startsWith("/login"))) &&
+    !isLoggedIn;
+
+  if (!shouldShowNav) return null;
 
   const navItems = [
     { key: "nav.home", href: "/love-of-jesus" },

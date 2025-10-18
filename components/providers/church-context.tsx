@@ -3,7 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 
-interface Church {
+export interface Church {
   id: string
   name: string
   city: string
@@ -30,40 +30,14 @@ export function ChurchProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true)
-    // Load user's churches and role from API or localStorage
     const loadChurches = async () => {
       try {
-        // Mock data - replace with actual API call
-        const mockChurches: Church[] = [
-          {
-            id: "1",
-            name: "Lighthouse Revival Church International - Abu Dhabi",
-            city: "Abu Dhabi",
-            country: "UAE",
-            role: "super_admin",
-          },
-          {
-            id: "2",
-            name: "Lighthouse Revival Church - Dubai",
-            city: "Dubai",
-            country: "UAE",
-            role: "church_pastor",
-          },
-        ]
-
-        setChurches(mockChurches)
-
-        // Load saved church from localStorage
-        const savedChurchId = localStorage.getItem("selectedChurchId")
-        if (savedChurchId) {
-          const savedChurch = mockChurches.find((c) => c.id === savedChurchId)
-          if (savedChurch) {
-            setSelectedChurch(savedChurch)
-            setUserRole(savedChurch.role)
-          }
-        } else if (mockChurches.length > 0) {
-          setSelectedChurch(mockChurches[0])
-          setUserRole(mockChurches[0].role)
+        const fetchedChurches = await import("@/lib/services/church-service").then(m => m.fetchChurches())
+        setChurches(fetchedChurches)
+        const selected = await import("@/lib/services/church-service").then(m => m.fetchSelectedChurch(fetchedChurches))
+        if (selected) {
+          setSelectedChurch(selected)
+          setUserRole(selected.role)
         }
       } catch (error) {
         console.error("Failed to load churches:", error)
@@ -71,7 +45,6 @@ export function ChurchProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false)
       }
     }
-
     loadChurches()
   }, [])
 
