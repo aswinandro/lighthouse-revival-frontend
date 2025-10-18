@@ -49,9 +49,10 @@ export default function DashboardPage() {
     }
   }
 
+  // Render dashboard content inside DashboardLayout for sidebar/navbar
   return (
     <DashboardLayout activeTab={activeTab} onTabChange={setActiveTab}>
       {renderContent()}
     </DashboardLayout>
-  )
+  );
 }
