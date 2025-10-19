@@ -7,6 +7,7 @@ import { useLanguage } from "@/components/providers/language-provider"
 import { useGSAP } from "@/hooks/use-gsap"
 
 import { Button } from "@/components/ui/button"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -31,32 +32,27 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login form submitted", { email, password });
+    setError(null);
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-      console.log("API base URL:", apiBase);
       const res = await fetch(`${apiBase}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      console.log("Login response status:", res.status);
       if (res.ok) {
         const data = await res.json();
-        console.log("Login success, response data:", data);
         localStorage.setItem("token", data.token || data.accessToken);
         router.push("/dashboard");
       } else {
-        const errorText = await res.text();
-        console.error("Login failed, backend response:", errorText);
-        alert("Invalid credentials");
+        setError("Invalid credentials");
       }
     } catch (err) {
-      console.error("Login error:", err);
-      alert("Login failed. Please try again.");
+      setError("Login failed. Please try again.");
     }
   }
 
@@ -70,6 +66,12 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">{t("login.emailLabel")}</Label>
