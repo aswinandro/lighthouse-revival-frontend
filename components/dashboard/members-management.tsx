@@ -16,7 +16,7 @@ import { Search, Plus, Edit, Trash2, Mail, Phone, MapPin } from "lucide-react"
 // Define Member type
 // Define Member type
 export interface Member {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone?: string;
@@ -25,7 +25,7 @@ export interface Member {
   emirate?: string;
   country?: string;
   preferred_service?: string;
-  church_id: number;
+  church_id: string;
   joined_at?: string;
   notes?: string;
   created_at: string;
@@ -47,16 +47,39 @@ export default function MembersManagement() {
     setError("");
     try {
       const churchId = selectedChurch?.id;
-      const url = churchId ? `/api/members?churchId=${churchId}` : "/api/members";
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const url = "http://localhost:5000/api/members";
       const response = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
       });
       if (!response.ok) throw new Error("Failed to fetch members");
       const data = await response.json();
-      let membersArray: Member[] = Array.isArray(data) ? data : (data.members ?? data.data ?? []);
+      let membersRaw: any[] = Array.isArray(data) ? data : (data.members ?? data.data ?? []);
+      // If a church is selected, filter by church; otherwise, show all (super admin)
+      if (churchId && churchId !== "" && churchId !== "all") {
+        membersRaw = membersRaw.filter((m) => String(m.church_id) === String(churchId));
+      }
+      // Map backend fields to frontend Member type
+      let membersArray: Member[] = membersRaw.map((m) => ({
+        id: String(m.id),
+        name: m.first_name && m.last_name ? `${m.first_name} ${m.last_name}` : m.first_name || m.last_name || m.name || "",
+        email: m.email,
+        phone: m.phone,
+        role: m.membership_status || m.role || "",
+        status: m.membership_status || m.status || "",
+        emirate: m.city || "",
+        country: m.country || "",
+        preferred_service: m.preferred_language || m.preferred_service || "",
+        church_id: String(m.church_id),
+        joined_at: m.membership_date ? (typeof m.membership_date === "string" ? m.membership_date.split("T")[0] : m.membership_date) : "",
+        notes: m.notes || "",
+        created_at: m.created_at || "",
+        updated_at: m.updated_at || "",
+      }));
       setMembers(membersArray);
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
