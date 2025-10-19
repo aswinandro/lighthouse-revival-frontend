@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
-import { MembersManagement } from "@/components/dashboard/members-management";
+import MembersManagement from "@/components/dashboard/members-management";
 import { NewcomersManagement } from "@/components/dashboard/newcomers-management";
 import { AttendanceManagement } from "@/components/dashboard/attendance-management";
 import { CoursesManagement } from "@/components/dashboard/courses-management";

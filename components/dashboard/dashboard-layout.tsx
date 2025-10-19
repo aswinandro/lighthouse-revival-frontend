@@ -109,12 +109,12 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
                       isRTL && "flex-row-reverse",
                     )}
                     onClick={() => {
-                      if (activeTab && onTabChange) {
+                      if (onTabChange) {
                         onTabChange(item.id);
                         setSidebarOpen(false);
                       }
                     }}
-                    disabled={!activeTab || !onTabChange}
+                    disabled={false}
                   >
                     <IconComponent className="w-5 h-5" />
                     {item.label}

@@ -10,48 +10,102 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Building2, Plus, Users, DollarSign, TrendingUp, Eye, Edit, UserPlus } from "lucide-react"
 
-export function ChurchesManagement() {
-  const churches = [
-    {
-      id: "1",
-      name: "Lighthouse Revival - Abu Dhabi",
-      city: "Abu Dhabi",
-      country: "UAE",
-      members: 1247,
-      income: 45000,
-      expenses: 32000,
-      attendance: 892,
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "Lighthouse Revival - Dubai",
-      city: "Dubai",
-      country: "UAE",
-      members: 856,
-      income: 38000,
-      expenses: 28000,
-      attendance: 654,
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Lighthouse Revival - Sharjah",
-      city: "Sharjah",
-      country: "UAE",
-      members: 432,
-      income: 22000,
-      expenses: 18000,
-      attendance: 321,
-      status: "Active",
-    },
-  ]
+import React, { useEffect, useState } from "react"
 
-  const users = [
-    { id: "1", name: "Pastor Michael", email: "michael@church.ae", church: "Abu Dhabi", role: "church_pastor" },
-    { id: "2", name: "Elder Mary", email: "mary@church.ae", church: "Abu Dhabi", role: "church_leader" },
-    { id: "3", name: "Pastor David", email: "david@church.ae", church: "Dubai", role: "church_pastor" },
-  ]
+type Church = {
+  id: string
+  name: string
+  city?: string
+  country?: string
+  members?: number
+  income?: number
+  expenses?: number
+  attendance?: number
+  status?: string
+}
+
+type User = {
+  id: string
+  name: string
+  email: string
+  church: string
+  role: string
+}
+
+export function ChurchesManagement() {
+  const [churches, setChurches] = useState<Church[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  // Fetch all churches
+  async function loadChurches() {
+    setLoading(true)
+    setError("")
+    try {
+      const token = localStorage.getItem("token")
+      const res = await fetch("http://localhost:5000/api/churches", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      })
+      if (!res.ok) throw new Error("Failed to fetch churches")
+      const data = await res.json()
+      setChurches(data.data || [])
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message)
+      } else {
+        setError("Failed to load churches")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch all users for selected church (for now, fetch for first church)
+  async function loadUsers(churchId: string) {
+    setLoading(true)
+    setError("")
+    try {
+      if (!churchId) return setUsers([])
+      const token = localStorage.getItem("token")
+      const res = await fetch(`http://localhost:5000/api/churches/${churchId}/users`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      })
+      if (!res.ok) throw new Error("Failed to fetch users")
+      const data = await res.json()
+      setUsers(data.data || [])
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message)
+      } else {
+        setError("Failed to load users")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadChurches()
+  }, [])
+
+  useEffect(() => {
+    if (churches.length > 0) {
+      if (churches[0]?.id) {
+        loadUsers(churches[0].id)
+      }
+    }
+  }, [churches])
+
+  // TODO: Implement add, update, delete, assign user handlers
 
   return (
     <div className="space-y-6">
@@ -118,19 +172,19 @@ export function ChurchesManagement() {
           { label: "Total Churches", value: churches.length, icon: Building2, color: "bg-primary" },
           {
             label: "Total Members",
-            value: churches.reduce((sum, c) => sum + c.members, 0).toLocaleString(),
+            value: churches.reduce((sum, c) => sum + (c.members ?? 0), 0).toLocaleString(),
             icon: Users,
             color: "bg-green-500",
           },
           {
             label: "Total Income",
-            value: `$${churches.reduce((sum, c) => sum + c.income, 0).toLocaleString()}`,
+            value: `$${churches.reduce((sum, c) => sum + (c.income ?? 0), 0).toLocaleString()}`,
             icon: DollarSign,
             color: "bg-blue-500",
           },
           {
             label: "Total Attendance",
-            value: churches.reduce((sum, c) => sum + c.attendance, 0).toLocaleString(),
+            value: churches.reduce((sum, c) => sum + (c.attendance ?? 0), 0).toLocaleString(),
             icon: TrendingUp,
             color: "bg-purple-500",
           },
@@ -183,9 +237,9 @@ export function ChurchesManagement() {
                   </TableCell>
                   <TableCell>{church.members}</TableCell>
                   <TableCell>{church.attendance}</TableCell>
-                  <TableCell className="text-green-600">${church.income.toLocaleString()}</TableCell>
-                  <TableCell className="text-red-600">${church.expenses.toLocaleString()}</TableCell>
-                  <TableCell className="font-bold">${(church.income - church.expenses).toLocaleString()}</TableCell>
+                  <TableCell className="text-green-600">${(church.income ?? 0).toLocaleString()}</TableCell>
+                  <TableCell className="text-red-600">${(church.expenses ?? 0).toLocaleString()}</TableCell>
+                  <TableCell className="font-bold">${((church.income ?? 0) - (church.expenses ?? 0)).toLocaleString()}</TableCell>
                   <TableCell>
                     <Badge variant="default">{church.status}</Badge>
                   </TableCell>

@@ -34,9 +34,9 @@ export function ChurchSelector() {
           <CommandList>
             <CommandEmpty>No church found.</CommandEmpty>
             <CommandGroup>
-              {churches.map((church) => (
+              {churches.map((church, idx) => (
                 <CommandItem
-                  key={church.id}
+                  key={church.id + '-' + idx}
                   value={church.name}
                   onSelect={() => {
                     setSelectedChurch(church)

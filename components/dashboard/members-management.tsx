@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
+import { useChurch } from "@/components/providers/church-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,73 +13,127 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Edit, Trash2, Mail, Phone, MapPin } from "lucide-react"
 
-export function MembersManagement() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterRole, setFilterRole] = useState("all")
-  const [filterStatus, setFilterStatus] = useState("all")
+// Define Member type
+// Define Member type
+export interface Member {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  status: string;
+  emirate?: string;
+  country?: string;
+  preferred_service?: string;
+  church_id: number;
+  joined_at?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
 
-  const members = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      phone: "+971-50-123-4567",
-      role: "Active",
-      status: "Active",
-      emirate: "Abu Dhabi",
-      country: "India",
-      joinedAt: "2023-01-15",
-      service: "English",
-    },
-    {
-      id: 2,
-      name: "Sarah Wilson",
-      email: "sarah@example.com",
-      phone: "+971-55-987-6543",
-      role: "Elder",
-      status: "Active",
-      emirate: "Dubai",
-      country: "Philippines",
-      joinedAt: "2022-08-20",
-      service: "Tamil",
-    },
-    {
-      id: 3,
-      name: "Michael Johnson",
-      email: "michael@example.com",
-      phone: "+971-52-456-7890",
-      role: "Pastor",
-      status: "Active",
-      emirate: "Sharjah",
-      country: "Nigeria",
-      joinedAt: "2021-03-10",
-      service: "English",
-    },
-    {
-      id: 4,
-      name: "Priya Sharma",
-      email: "priya@example.com",
-      phone: "+971-56-234-5678",
-      role: "Active",
-      status: "Active",
-      emirate: "Abu Dhabi",
-      country: "India",
-      joinedAt: "2023-06-05",
-      service: "Hindi",
-    },
-    {
-      id: 5,
-      name: "David Thomas",
-      email: "david@example.com",
-      phone: "+971-50-345-6789",
-      role: "Lifetime",
-      status: "Active",
-      emirate: "Abu Dhabi",
-      country: "India",
-      joinedAt: "2020-12-01",
-      service: "Malayalam",
-    },
-  ]
+export default function MembersManagement() {
+  const { selectedChurch } = useChurch();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Fetch members from backend REST API
+  async function loadMembers() {
+    setLoading(true);
+    setError("");
+    try {
+      const churchId = selectedChurch?.id;
+      const url = churchId ? `/api/members?churchId=${churchId}` : "/api/members";
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to fetch members");
+      const data = await response.json();
+      let membersArray: Member[] = Array.isArray(data) ? data : (data.members ?? data.data ?? []);
+      setMembers(membersArray);
+    } catch (e) {
+      const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
+      setError(errorMsg || "Failed to load members");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Initial load
+  React.useEffect(() => {
+    loadMembers();
+    // reload when selectedChurch changes
+  }, [selectedChurch]);
+
+  // Add, update, delete handlers
+  async function handleAddMember(memberData: Omit<Member, "id">) {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch("/api/members", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(memberData),
+      });
+      if (!response.ok) throw new Error("Failed to add member");
+      await loadMembers();
+    } catch (e) {
+      const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
+      setError(errorMsg || "Failed to add member");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteMember(id: Member["id"]) {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/members/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) throw new Error("Failed to delete member");
+      await loadMembers();
+    } catch (e) {
+      const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
+      setError(errorMsg || "Failed to delete member");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleUpdateMember(id: Member["id"], memberData: Partial<Member>) {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/members/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(memberData),
+      });
+      if (!response.ok) throw new Error("Failed to update member");
+      await loadMembers();
+    } catch (e) {
+      const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
+      setError(errorMsg || "Failed to update member");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -95,107 +150,18 @@ export function MembersManagement() {
 
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesRole = filterRole === "all" || member.role === filterRole
-    const matchesStatus = filterStatus === "all" || member.status === filterStatus
-    return matchesSearch && matchesRole && matchesStatus
-  })
+      member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === "all" || member.role === filterRole;
+    const matchesStatus = filterStatus === "all" || member.status === filterStatus;
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
+  // Add error/loading UI
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Members Management</h2>
-          <p className="text-muted-foreground">Manage church members and their information</p>
-        </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Member
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Add New Member</DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" placeholder="Enter full name" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="Enter email" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" placeholder="Enter phone number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Elder">Elder</SelectItem>
-                    <SelectItem value="Pastor">Pastor</SelectItem>
-                    <SelectItem value="Lifetime">Lifetime</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="emirate">Emirate</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select emirate" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Abu Dhabi">Abu Dhabi</SelectItem>
-                    <SelectItem value="Dubai">Dubai</SelectItem>
-                    <SelectItem value="Sharjah">Sharjah</SelectItem>
-                    <SelectItem value="Ajman">Ajman</SelectItem>
-                    <SelectItem value="Fujairah">Fujairah</SelectItem>
-                    <SelectItem value="Ras Al Khaimah">Ras Al Khaimah</SelectItem>
-                    <SelectItem value="Umm Al Quwain">Umm Al Quwain</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="country">Home Country</Label>
-                <Input id="country" placeholder="Enter home country" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="service">Preferred Service</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="English">English</SelectItem>
-                    <SelectItem value="Tamil">Tamil</SelectItem>
-                    <SelectItem value="Hindi">Hindi</SelectItem>
-                    <SelectItem value="Malayalam">Malayalam</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea id="notes" placeholder="Additional notes about the member" />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline">Cancel</Button>
-              <Button>Add Member</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
+      {error && <div className="text-red-500">{error}</div>}
+      {loading && <div className="text-muted-foreground">Loading...</div>}
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
@@ -235,7 +201,6 @@ export function MembersManagement() {
           </div>
         </CardContent>
       </Card>
-
       {/* Members Table */}
       <Card>
         <CardHeader>
@@ -286,15 +251,15 @@ export function MembersManagement() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{member.service}</Badge>
+                      <Badge variant="outline">{member.preferred_service}</Badge>
                     </TableCell>
-                    <TableCell className="text-sm">{member.joinedAt}</TableCell>
+                    <TableCell className="text-sm">{member.joined_at}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => handleUpdateMember(member.id, member)}>
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive">
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteMember(member.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -307,5 +272,5 @@ export function MembersManagement() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
