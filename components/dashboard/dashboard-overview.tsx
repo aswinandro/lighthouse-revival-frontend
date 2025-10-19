@@ -26,37 +26,46 @@ export function DashboardOverview() {
       fetchAttendanceTrends(),
     ])
       .then(([overview, attendanceTrends]) => {
-        // Map API data to UI stat cards
+        console.log("Dashboard API overview response:", overview);
+        const overviewData = overview.data || {};
         setStats([
           {
             title: "Total Members",
-            value: overview.totalMembers?.toLocaleString?.() ?? overview.totalMembers ?? "-",
-            change: overview.membersChange ?? "",
-            changeType: overview.membersChangeType ?? "positive",
+            value: overviewData.totalMembers?.toLocaleString?.() ?? overviewData.totalMembers ?? "-",
+            change: overviewData.membersChange ?? "",
+            changeType: overviewData.membersChangeType ?? "positive",
             icon: Users,
             color: "bg-primary",
           },
           {
-            title: "New Members",
-            value: overview.newMembers?.toLocaleString?.() ?? overview.newMembers ?? "-",
-            change: overview.newMembersChange ?? "",
-            changeType: overview.newMembersChangeType ?? "positive",
+            title: "Active Members",
+            value: overviewData.activeMembers?.toLocaleString?.() ?? overviewData.activeMembers ?? "-",
+            change: overviewData.activeMembersChange ?? "",
+            changeType: overviewData.activeMembersChangeType ?? "positive",
             icon: UserPlus,
             color: "bg-accent",
           },
           {
-            title: "This Week Attendance",
-            value: overview.thisWeekAttendance?.toLocaleString?.() ?? overview.thisWeekAttendance ?? "-",
-            change: overview.attendanceChange ?? "",
-            changeType: overview.attendanceChangeType ?? "positive",
+            title: "Newcomers This Month",
+            value: overviewData.newcomersThisMonth?.toLocaleString?.() ?? overviewData.newcomersThisMonth ?? "-",
+            change: overviewData.newcomersChange ?? "",
+            changeType: overviewData.newcomersChangeType ?? "positive",
             icon: TrendingUp,
             color: "bg-secondary",
           },
           {
-            title: "Prayer Requests",
-            value: overview.prayerRequests?.toLocaleString?.() ?? overview.prayerRequests ?? "-",
-            change: overview.prayerRequestsChange ?? "",
-            changeType: overview.prayerRequestsChangeType ?? "positive",
+            title: "Upcoming Events",
+            value: overviewData.upcomingEvents?.toLocaleString?.() ?? overviewData.upcomingEvents ?? "-",
+            change: overviewData.upcomingEventsChange ?? "",
+            changeType: overviewData.upcomingEventsChangeType ?? "positive",
+            icon: Calendar,
+            color: "bg-muted",
+          },
+          {
+            title: "Open Prayer Requests",
+            value: overviewData.openPrayerRequests?.toLocaleString?.() ?? overviewData.openPrayerRequests ?? "-",
+            change: overviewData.openPrayerRequestsChange ?? "",
+            changeType: overviewData.openPrayerRequestsChangeType ?? "positive",
             icon: MessageSquare,
             color: "bg-muted",
           },
@@ -152,6 +161,39 @@ export function DashboardOverview() {
             })}
       </div>
 
+      {/* Attendance Trends Table */}
+      {trends && trends.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Attendance Trends (Last 30 Days)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-2 py-1">Date</th>
+                    <th className="px-2 py-1">Service Type</th>
+                    <th className="px-2 py-1">Language</th>
+                    <th className="px-2 py-1">Present Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trends.map((row, idx) => (
+                    <tr key={idx}>
+                      <td className="px-2 py-1">{new Date(row.date).toLocaleDateString()}</td>
+                      <td className="px-2 py-1">{row.service_type}</td>
+                      <td className="px-2 py-1">{row.language}</td>
+                      <td className="px-2 py-1">{row.present_count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activities */}
         <Card>
@@ -236,7 +278,7 @@ export function DashboardOverview() {
 
       {/* Service Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
+        {[ 
           { service: "English Service", time: "12:30pm - 2:30pm", day: "Sunday", attendees: 234 },
           { service: "Tamil Service", time: "3:00pm - 5:00pm", day: "Sunday", attendees: 189 },
           { service: "Hindi Service", time: "4:30pm - 6:00pm", day: "Saturday", attendees: 156 },
