@@ -1,5 +1,3 @@
-"use client";
-
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { MembersManagement } from "@/components/dashboard/members-management";
 import { NewcomersManagement } from "@/components/dashboard/newcomers-management";
@@ -13,7 +11,6 @@ import { PreachingSchedulesManagement } from "@/components/dashboard/preaching-s
 import { WeeklyReportsManagement } from "@/components/dashboard/weekly-reports-management";
 import { EmailConfigManagement } from "@/components/dashboard/email-config-management";
 
-// Export a mapping of tab IDs to components
 export const dashboardTabComponents = {
   overview: DashboardOverview,
   members: MembersManagement,
@@ -28,8 +25,3 @@ export const dashboardTabComponents = {
   reports: WeeklyReportsManagement,
   "email-config": EmailConfigManagement,
 };
-
-// This page is rendered by the layout, so we return null here
-export default function DashboardPage() {
-  return null;
-}

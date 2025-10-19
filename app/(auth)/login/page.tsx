@@ -48,7 +48,14 @@ export default function LoginPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        localStorage.setItem("token", data.token || data.accessToken);
+        // Support token at top level, or nested under data
+        const token = data.token || data.accessToken || (data.data && data.data.token);
+        if (!token) {
+          setError("No token received from server. Please contact support.");
+          return;
+        }
+        localStorage.setItem("token", token);
+        console.log("Login: Token stored in localStorage", token);
         router.push("/dashboard");
       } else {
         setError("Invalid credentials");

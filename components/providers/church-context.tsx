@@ -26,10 +26,8 @@ export function ChurchProvider({ children }: { children: React.ReactNode }) {
   const [churches, setChurches] = useState<Church[]>([])
   const [userRole, setUserRole] = useState<string>("church_believer")
   const [isLoading, setIsLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const loadChurches = async () => {
       try {
         const fetchedChurches = await import("@/lib/services/church-service").then(m => m.fetchChurches())
@@ -49,15 +47,11 @@ export function ChurchProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (mounted && selectedChurch) {
+    if (selectedChurch) {
       localStorage.setItem("selectedChurchId", selectedChurch.id)
       setUserRole(selectedChurch.role)
     }
-  }, [selectedChurch, mounted])
-
-  if (!mounted) {
-    return <div>{children}</div>
-  }
+  }, [selectedChurch])
 
   return (
     <ChurchContext.Provider value={{ selectedChurch, churches, setSelectedChurch, userRole, isLoading }}>

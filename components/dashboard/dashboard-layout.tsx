@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { LanguageSelector } from "@/components/ui/language-selector"
@@ -27,48 +26,33 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+
 interface DashboardLayoutProps {
-  children: React.ReactNode
-  activeTab: string
-  onTabChange: (tab: string) => void
+  children: React.ReactNode;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
 export function DashboardLayout({ children, activeTab, onTabChange }: DashboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { isRTL } = useLanguage()
-  const { userRole } = useChurch()
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isRTL } = useLanguage();
+  const { userRole } = useChurch();
 
   const navigationItems = [
-    {
-      id: "overview",
-      label: "Overview",
-      icon: LayoutDashboard,
-      roles: ["super_admin", "church_pastor", "church_leader", "church_believer"],
-    },
+    { id: "overview", label: "Overview", icon: LayoutDashboard, roles: ["super_admin", "church_pastor", "church_leader", "church_believer"] },
     { id: "members", label: "Members", icon: Users, roles: ["super_admin", "church_pastor", "church_leader"] },
     { id: "newcomers", label: "Newcomers", icon: UserPlus, roles: ["super_admin", "church_pastor", "church_leader"] },
-    {
-      id: "attendance",
-      label: "Attendance",
-      icon: BarChart3,
-      roles: ["super_admin", "church_pastor", "church_leader"],
-    },
+    { id: "attendance", label: "Attendance", icon: BarChart3, roles: ["super_admin", "church_pastor", "church_leader"] },
     { id: "courses", label: "Courses", icon: BookOpen, roles: ["super_admin", "church_pastor", "church_leader"] },
     { id: "events", label: "Events", icon: Calendar, roles: ["super_admin", "church_pastor", "church_leader"] },
-    {
-      id: "prayers",
-      label: "Prayer Requests",
-      icon: MessageSquare,
-      roles: ["super_admin", "church_pastor", "church_leader"],
-    },
+    { id: "prayers", label: "Prayer Requests", icon: MessageSquare, roles: ["super_admin", "church_pastor", "church_leader"] },
     { id: "ministries", label: "Ministries", icon: Church, roles: ["super_admin", "church_pastor", "church_leader"] },
     { id: "churches", label: "Churches", icon: Building2, roles: ["super_admin"] },
     { id: "schedules", label: "Preaching Schedules", icon: Calendar, roles: ["super_admin", "church_pastor"] },
     { id: "reports", label: "Weekly Reports", icon: FileText, roles: ["super_admin", "church_pastor"] },
     { id: "email-config", label: "Email Config", icon: Mail, roles: ["super_admin"] },
-  ]
-
-  const filteredNavItems = navigationItems.filter((item) => item.roles.includes(userRole))
+  ];
+  const filteredNavItems = navigationItems.filter((item) => item.roles.includes(userRole));
 
   return (
     <div className="min-h-screen bg-background">
@@ -114,7 +98,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
               {filteredNavItems.map((item) => {
-                const IconComponent = item.icon
+                const IconComponent = item.icon;
                 return (
                   <Button
                     key={item.id}
@@ -125,14 +109,17 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
                       isRTL && "flex-row-reverse",
                     )}
                     onClick={() => {
-                      onTabChange(item.id)
-                      setSidebarOpen(false)
+                      if (activeTab && onTabChange) {
+                        onTabChange(item.id);
+                        setSidebarOpen(false);
+                      }
                     }}
+                    disabled={!activeTab || !onTabChange}
                   >
                     <IconComponent className="w-5 h-5" />
                     {item.label}
                   </Button>
-                )
+                );
               })}
             </nav>
 
@@ -164,16 +151,18 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         {/* Main Content */}
         <main className="flex-1 lg:ml-0">
           {/* Desktop Header */}
-          <div className="hidden lg:flex bg-card border-b border-border p-4 items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold capitalize">{activeTab}</h2>
-              <p className="text-muted-foreground">Manage your church {activeTab}</p>
+          {activeTab && (
+            <div className="hidden lg:flex bg-card border-b border-border p-4 items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold capitalize">{activeTab}</h2>
+                <p className="text-muted-foreground">Manage your church {activeTab}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <ChurchSelector />
+                <LanguageSelector />
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <ChurchSelector />
-              <LanguageSelector />
-            </div>
-          </div>
+          )}
 
           {/* Content */}
           <div className="p-6">{children}</div>
@@ -185,5 +174,5 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
     </div>
-  )
+  );
 }
