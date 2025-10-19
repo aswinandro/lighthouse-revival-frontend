@@ -28,7 +28,9 @@ export default function LoginPage() {
     if (cardRef.current) {
       fadeIn(cardRef.current, { y: 20, duration: 0.5 })
     }
-  }, [fadeIn])
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
