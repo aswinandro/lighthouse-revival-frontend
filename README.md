@@ -1,120 +1,246 @@
----
-# Lighthouse Revival Church - Frontend
+# Database Migrations and Seeds
 
-This is the official frontend repository for the Lighthouse Revival Church website, built with Next.js, TypeScript, and Tailwind CSS. The application is designed to be modern, responsive, multi-lingual, and a central hub for the church community.
+This directory contains MySQL database migrations and seed data for the Lighthouse Revival Church Management System.
 
- 
-*(Replace this with a screenshot of your application's homepage)*
+## Directory Structure
 
----
+\`\`\`
+scripts/
+├── migrations/          # Database schema migrations
+│   └── 001-initial-schema.sql
+├── seeds/              # Sample data for testing
+│   └── 001-seed-initial-data.sql
+└── README.md           # This file
+\`\`\`
 
-## ✨ Key Features
+## Running Migrations
 
-- **Multi-Channel Prayer Request System**:
-  - **Google Sheets Integration**: Users can submit prayer requests through a dedicated form. These requests are automatically and securely saved to a Google Sheet via a backend API, allowing for easy management by church staff.
-  - **Direct WhatsApp Submission**: An alternative "Send via WhatsApp" button allows users to send their formatted prayer request directly to the church's official WhatsApp number for immediate attention.
+### Option 1: Using MySQL Command Line
 
-- **Dynamic Event Display**:
-  - Fetches and displays upcoming events directly from the church's **Google Calendar API**.
-  - Presents events in a visually engaging and interactive animated card carousel on the homepage.
+\`\`\`bash
+# Navigate to backend directory
+cd backend
 
-- **Multi-Language & RTL Support**:
-  - Fully internationalized content structure, managed via a custom `LanguageProvider`.
-  - Seamless support for **Right-to-Left (RTL)** languages, ensuring a native and accessible user experience for all community members. The UI automatically adjusts its layout for RTL languages.
+# Run migration
+mysql -u your_username -p your_database < src/scripts/migrations/001-initial-schema.sql
 
-- **Modern & Responsive UI**:
-  - Built with **Tailwind CSS** and **Shadcn/UI** for a clean, beautiful, and consistent design system.
-  - Fully responsive layout that works perfectly on desktops, tablets, and mobile devices.
-  - Smooth page transitions and component animations powered by **Framer Motion**.
+# Run seed data
+mysql -u your_username -p your_database < src/scripts/seeds/001-seed-initial-data.sql
+\`\`\`
 
-- **Rich Content Pages**:
-  - A compelling "About Us" page detailing the church's history and the pastor's journey.
-  - Clear, organized sections for different church services, contact information, and the church's core mission.
+### Option 2: Using MySQL Workbench
 
-- **Instant User Feedback**:
-  - Integrated **toast notifications** for actions like form submissions, providing clear success or error messages to the user.
+1. Open MySQL Workbench
+2. Connect to your database
+3. Open the migration file: `File > Open SQL Script`
+4. Execute the script: `Query > Execute (All or Selection)`
+5. Repeat for seed file
 
----
+### Option 3: Using Node.js Script
 
-## 🛠️ Tech Stack
+\`\`\`bash
+cd backend
+npm run migrate
+npm run seed
+\`\`\`
 
-- **Framework**: Next.js (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: Shadcn/UI
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
+## Migration Files
 
----
+### 001-initial-schema.sql
 
-## 🚀 Getting Started
+Complete database schema including:
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+- **Core Tables**: users, churches, user_church_roles
+- **Member Management**: members, newcomers
+- **Attendance**: attendance, qr_attendance_sessions, qr_attendance_records
+- **Education**: courses, course_enrollments
+- **Events**: events, event_registrations
+- **Prayer**: prayer_requests, prayer_request_email_config
+- **Ministries**: ministries, ministry_members
+- **Church Management**: preaching_schedules, weekly_church_reports
 
-### Prerequisites
+**Features:**
+- UUID primary keys
+- Foreign key constraints
+- Indexes for performance
+- ENUM types for status fields
+- Generated columns for calculations
+- Proper cascading deletes
 
-- Node.js (v18.x or later)
-- npm or yarn
+## Seed Data
 
-### Installation
+### 001-seed-initial-data.sql
 
-1. **Clone the repository:**
-   ```sh
-   git clone https://github.com/your-username/lighthouse-revival-frontend.git
-   cd lighthouse-revival-frontend
-   ```
+Sample data for testing including:
 
-2. **Install dependencies:**
-   ```sh
-   npm install
-   ```
+- **3 Churches**: Abu Dhabi, Dubai, Sharjah
+- **5 Users**: 1 Super Admin, 2 Church Pastors, 2 Church Leaders
+- **10 Members**: Distributed across churches
+- **4 Newcomers**: Recent visitors
+- **Attendance Records**: Recent service attendance
+- **3 Courses**: Active Bible studies
+- **3 Events**: Past and upcoming events
+- **3 Prayer Requests**: Various types
+- **4 Ministries**: Worship, Youth, Prayer, Children
+- **Preaching Schedules**: Current and upcoming
+- **2 Weekly Reports**: Approved financial reports
+- **Prayer Email Config**: Email routing setup
+- **3 QR Sessions**: Active attendance sessions
 
-3. **Set up environment variables:**
-   Create a `.env.local` file in the root of the project by copying the example file:
-   ```sh
-   cp .env.example .env.local
-   ```
-   Now, fill in the required values in `.env.local`. These are necessary for fetching events and submitting prayer requests.
+**Test Credentials:**
+- Email: `chiefpastor@lighthouse.org`
+- Password: `password123`
+- Role: Super Admin
 
-4. **Run the development server:**
-   ```sh
-   npm run dev
-   ```
+## Database Schema Overview
 
-Open http://localhost:3000 with your browser to see the result.
+### User Roles Hierarchy
 
----
+1. **Super Admin (Chief Pastor)**
+   - Full access to all churches
+   - Create/manage churches
+   - Assign roles
+   - View consolidated reports
 
-## ⚙️ Environment Variables
+2. **Church Pastor**
+   - Manage assigned church
+   - Submit weekly reports
+   - Create QR sessions
+   - Manage members
 
-To run this project, you will need to add the following environment variables to your `.env.local` file.
+3. **Church Leader**
+   - Assist pastor
+   - Manage ministries
+   - Follow up newcomers
 
-`NEXT_PUBLIC_GOOGLE_CALENDAR_API_KEY` - Your Google Calendar API Key.
-`NEXT_PUBLIC_GOOGLE_CALENDAR_ID` - The ID of the Google Calendar to fetch events from.
-`GOOGLE_SHEET_ID` - The ID of the Google Sheet for prayer requests (used by the backend).
-`GOOGLE_SERVICE_ACCOUNT_EMAIL` - The service account email for Google Sheets API access.
-`GOOGLE_PRIVATE_KEY` - The private key for the Google service account.
+4. **Church Believer**
+   - Regular member
+   - View own data
 
----
+### Key Features
 
-## 📁 Project Structure
+#### Multi-Church Management
+- Multiple churches under one system
+- User-church role assignments
+- Church-specific data isolation
 
-```
-frontend/
-├── app/                # Next.js App Router: Pages and Layouts
-│   ├── api/            # API routes (e.g., for prayer requests)
-│   ├── (main)/         # Main page routes
-│   ├── about/          # About Us page
-│   ├── request/        # Prayer Request page
-│   ├── layout.tsx      # Root layout with Navbar and Footer
-│   └── page.tsx        # Homepage
-├── components/         # Reusable components
-│   ├── layout/         # Navigation, Footer
-│   ├── providers/      # Context providers (e.g., LanguageProvider)
-│   ├── sections/       # Large page sections (e.g., Hero, Events)
-│   └── ui/             # UI primitives from Shadcn/UI (Button, Toast, etc.)
-├── hooks/              # Custom React hooks (e.g., use-toast)
-├── lib/                # Utility functions and constants
-├── public/             # Static assets (images, fonts)
-└── styles/             # Global styles
-```
+#### Financial Tracking
+- Weekly income (tithe, offerings, donations)
+- Detailed expense categories
+- Automatic calculations
+- Approval workflow
+
+#### QR Attendance System
+- Generate QR codes for services
+- Automatic member recognition
+- Newcomer sign-up flow
+- Real-time attendance tracking
+
+#### Preaching Schedules
+- Super admin assigns topics
+- Pastor reports actual sermon
+- Attendance tracking
+- New converts recording
+
+#### Comprehensive Reporting
+- Individual church reports
+- Consolidated multi-church reports
+- Financial summaries
+- Attendance analytics
+
+## Important Notes
+
+### Before Running Migrations
+
+1. **Backup existing data** if running on production
+2. **Update connection settings** in `.env` file
+3. **Ensure MySQL version** 8.0 or higher
+4. **Check user permissions** for CREATE, DROP, ALTER
+
+### After Running Migrations
+
+1. **Verify all tables created**: Run `SHOW TABLES;`
+2. **Check foreign keys**: Run `SHOW CREATE TABLE table_name;`
+3. **Test with seed data**: Verify data integrity
+4. **Update application config**: Ensure connection works
+
+### Password Hashing
+
+The seed data includes bcrypt-hashed passwords. In production:
+- Use proper bcrypt hashing (cost factor 10+)
+- Never store plain text passwords
+- Implement password reset functionality
+
+### Security Considerations
+
+1. **Change default passwords** immediately
+2. **Use environment variables** for sensitive data
+3. **Enable SSL** for database connections
+4. **Implement rate limiting** on authentication
+5. **Regular backups** of production data
+
+## Troubleshooting
+
+### Common Issues
+
+**Error: Table already exists**
+\`\`\`sql
+-- Drop all tables first
+SET FOREIGN_KEY_CHECKS = 0;
+-- Drop tables in reverse order
+SET FOREIGN_KEY_CHECKS = 1;
+\`\`\`
+
+**Error: Foreign key constraint fails**
+- Ensure parent tables exist before child tables
+- Check referenced IDs exist in parent tables
+- Verify foreign key column types match
+
+**Error: UUID() function not found**
+- Requires MySQL 8.0+
+- Alternative: Use `CHAR(36)` with application-generated UUIDs
+
+**Error: Generated column syntax**
+- Requires MySQL 5.7.6+
+- Use `GENERATED ALWAYS AS (...) STORED`
+
+## Maintenance
+
+### Regular Tasks
+
+1. **Backup Database**
+   \`\`\`bash
+   mysqldump -u username -p database_name > backup.sql
+   \`\`\`
+
+2. **Optimize Tables**
+   \`\`\`sql
+   OPTIMIZE TABLE table_name;
+   \`\`\`
+
+3. **Analyze Performance**
+   \`\`\`sql
+   EXPLAIN SELECT * FROM table_name WHERE condition;
+   \`\`\`
+
+4. **Update Statistics**
+   \`\`\`sql
+   ANALYZE TABLE table_name;
+   \`\`\`
+
+## Support
+
+For issues or questions:
+- Check application logs
+- Review MySQL error logs
+- Contact system administrator
+- Refer to main README.md
+
+## Version History
+
+- **v1.0** (2024-01-20): Initial schema with all core features
+  - Multi-church management
+  - QR attendance system
+  - Financial tracking
+  - Preaching schedules
+  - Comprehensive reporting
