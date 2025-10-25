@@ -89,6 +89,7 @@ export default function PreachingSchedulesManagement() {
       const mapped = (data.data ?? []).map((s: any) => ({
         id: s.id,
         church: s.church_name,
+        pastor: s.pastor_name || "",
         week: s.week_start_date && s.week_end_date ? `${new Date(s.week_start_date).toLocaleDateString()} - ${new Date(s.week_end_date).toLocaleDateString()}` : "",
         topic: s.assigned_topic,
         scripture: s.assigned_scripture,
