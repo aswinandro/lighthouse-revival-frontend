@@ -12,37 +12,107 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Eye, CheckCircle } from "lucide-react"
 import { useChurch } from "@/components/providers/church-context"
 
-export function PreachingSchedulesManagement() {
-  const { userRole, selectedChurch } = useChurch()
 
-  const schedules = [
-    {
-      id: "1",
-      church: "Abu Dhabi Church",
-      pastor: "Pastor Michael",
-      week: "Jan 28 - Feb 3, 2024",
-      topic: "The Power of Faith",
-      scripture: "Hebrews 11:1-6",
-      comments: "Focus on practical applications of faith in daily life",
-      actualTopic: "",
-      pastorNotes: "",
-      attendance: null,
-      status: "Scheduled",
-    },
-    {
-      id: "2",
-      church: "Dubai Church",
-      pastor: "Pastor David",
-      week: "Jan 28 - Feb 3, 2024",
-      topic: "Walking in Love",
-      scripture: "1 Corinthians 13",
-      comments: "Emphasize love as the foundation of Christian life",
-      actualTopic: "Walking in Love - Practical Steps",
-      pastorNotes: "Great response from congregation, many testimonies shared",
-      attendance: 654,
-      status: "Completed",
-    },
-  ]
+import React, { useEffect, useState } from "react"
+
+export default function PreachingSchedulesManagement() {
+  const { userRole, selectedChurch } = useChurch()
+  const [schedules, setSchedules] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  // Assign Topic dialog state
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+  const [assignLoading, setAssignLoading] = useState(false)
+  const [assignSuccess, setAssignSuccess] = useState(false)
+  const [assignError, setAssignError] = useState("")
+  const [form, setForm] = useState({
+    church_id: "",
+    assigned_pastor_id: "",
+    week_start_date: "",
+    week_end_date: "",
+    assigned_topic: "",
+    assigned_scripture: "",
+    super_admin_comments: "",
+  })
+
+  // Fetch schedules
+  const fetchSchedules = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
+      let url = `${baseUrl}/api/preaching-schedules`
+      if (userRole !== "super_admin" && selectedChurch?.id) {
+        url += `?churchId=${selectedChurch.id}`
+      }
+      const response = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+      if (!response.ok) throw new Error("Failed to fetch schedules")
+      const data = await response.json()
+      const mapped = (data.data ?? []).map((s: any) => ({
+        id: s.id,
+        church: s.church_name,
+        week: s.week_start_date && s.week_end_date ? `${new Date(s.week_start_date).toLocaleDateString()} - ${new Date(s.week_end_date).toLocaleDateString()}` : "",
+        topic: s.assigned_topic,
+        scripture: s.assigned_scripture,
+        comments: s.super_admin_comments,
+        actualTopic: s.actual_topic_preached,
+        pastorNotes: s.pastor_notes,
+        attendance: s.attendance_count,
+        status: s.status,
+      }))
+      setSchedules(mapped)
+    } catch (e) {
+      setError((e as any).message || "Failed to load schedules")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchSchedules()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userRole, selectedChurch])
+
+  // Assign Topic handler
+  const handleAssignTopic = async () => {
+    setAssignLoading(true)
+    setAssignError("")
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
+      const response = await fetch(`${baseUrl}/api/preaching-schedules`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(form),
+      })
+      if (!response.ok) throw new Error("Failed to assign topic")
+      setAssignSuccess(true)
+      setAssignDialogOpen(false)
+      setForm({
+        church_id: "",
+        assigned_pastor_id: "",
+        week_start_date: "",
+        week_end_date: "",
+        assigned_topic: "",
+        assigned_scripture: "",
+        super_admin_comments: "",
+      })
+      fetchSchedules()
+    } catch (e) {
+      setAssignError((e as any).message || "Failed to assign topic")
+    } finally {
+      setAssignLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -55,71 +125,93 @@ export function PreachingSchedulesManagement() {
           </p>
         </div>
         {userRole === "super_admin" && (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Assign Topic
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Assign Preaching Topic</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Church</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select church" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">Abu Dhabi Church</SelectItem>
-                      <SelectItem value="2">Dubai Church</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Pastor</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select pastor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">Pastor Michael</SelectItem>
-                      <SelectItem value="2">Pastor David</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+          <>
+            <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2" onClick={() => setAssignDialogOpen(true)}>
+                  <Plus className="w-4 h-4" />
+                  Assign Topic
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Assign Preaching Topic</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label>Week Start</Label>
-                    <Input type="date" />
+                    <Label>Church</Label>
+                    <Input
+                      placeholder="Church ID"
+                      value={form.church_id}
+                      onChange={e => setForm(f => ({ ...f, church_id: e.target.value }))}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label>Week End</Label>
-                    <Input type="date" />
+                    <Label>Pastor</Label>
+                    <Input
+                      placeholder="Pastor User ID"
+                      value={form.assigned_pastor_id}
+                      onChange={e => setForm(f => ({ ...f, assigned_pastor_id: e.target.value }))}
+                    />
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Week Start</Label>
+                      <Input
+                        type="date"
+                        value={form.week_start_date}
+                        onChange={e => setForm(f => ({ ...f, week_start_date: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Week End</Label>
+                      <Input
+                        type="date"
+                        value={form.week_end_date}
+                        onChange={e => setForm(f => ({ ...f, week_end_date: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Topic</Label>
+                    <Input
+                      placeholder="Enter preaching topic"
+                      value={form.assigned_topic}
+                      onChange={e => setForm(f => ({ ...f, assigned_topic: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Scripture Reference</Label>
+                    <Input
+                      placeholder="e.g., John 3:16-21"
+                      value={form.assigned_scripture}
+                      onChange={e => setForm(f => ({ ...f, assigned_scripture: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Comments/Instructions</Label>
+                    <Textarea
+                      placeholder="Additional notes for the pastor"
+                      value={form.super_admin_comments}
+                      onChange={e => setForm(f => ({ ...f, super_admin_comments: e.target.value }))}
+                    />
+                  </div>
+                  {assignError && <div className="text-red-500 text-sm">{assignError}</div>}
                 </div>
-                <div className="space-y-2">
-                  <Label>Topic</Label>
-                  <Input placeholder="Enter preaching topic" />
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setAssignDialogOpen(false)} disabled={assignLoading}>Cancel</Button>
+                  <Button onClick={handleAssignTopic} disabled={assignLoading}>
+                    {assignLoading ? "Assigning..." : "Assign Topic"}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label>Scripture Reference</Label>
-                  <Input placeholder="e.g., John 3:16-21" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Comments/Instructions</Label>
-                  <Textarea placeholder="Additional notes for the pastor" />
-                </div>
+              </DialogContent>
+            </Dialog>
+            {assignSuccess && (
+              <div className="fixed top-4 right-4 z-50">
+                <div className="bg-green-600 text-white px-4 py-2 rounded shadow">Successfully assigned topic!</div>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Assign Topic</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+            )}
+          </>
         )}
       </div>
 
