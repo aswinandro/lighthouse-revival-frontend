@@ -16,7 +16,7 @@ import { useChurch } from "@/components/providers/church-context"
 import React, { useEffect, useState } from "react"
 
 export default function PreachingSchedulesManagement() {
-  const { userRole, selectedChurch } = useChurch()
+  const { userRole, selectedChurch, churches } = useChurch()
   const [schedules, setSchedules] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -34,6 +34,38 @@ export default function PreachingSchedulesManagement() {
     assigned_scripture: "",
     super_admin_comments: "",
   })
+
+  // Pastors for selected church (fetch from /api/users for real user IDs)
+  const [pastors, setPastors] = useState<{ id: string, name: string }[]>([])
+  useEffect(() => {
+    async function fetchPastors() {
+      setPastors([])
+      if (!form.church_id) return
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
+        // Use the correct role value for user_church_roles
+        const url = `${baseUrl}/api/users?role=church_pastor&churchId=${form.church_id}`
+        const response = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        })
+        if (!response.ok) throw new Error("Failed to fetch pastors")
+        const data = await response.json()
+        // Expecting array of users with id and name
+        const usersRaw = Array.isArray(data) ? data : (data.users ?? data.data ?? [])
+        setPastors(usersRaw.map((u: any) => ({
+          id: String(u.id),
+          name: u.name || (u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.first_name || u.last_name || ""),
+        })))
+      } catch {
+        setPastors([])
+      }
+    }
+    fetchPastors()
+  }, [form.church_id])
 
   // Fetch schedules
   const fetchSchedules = async () => {
@@ -140,19 +172,36 @@ export default function PreachingSchedulesManagement() {
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label>Church</Label>
-                    <Input
-                      placeholder="Church ID"
+                    <Select
                       value={form.church_id}
-                      onChange={e => setForm(f => ({ ...f, church_id: e.target.value }))}
-                    />
+                      onValueChange={val => setForm(f => ({ ...f, church_id: val, assigned_pastor_id: "" }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select church" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {churches.map((church) => (
+                          <SelectItem key={church.id} value={church.id}>{church.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Pastor</Label>
-                    <Input
-                      placeholder="Pastor User ID"
+                    <Select
                       value={form.assigned_pastor_id}
-                      onChange={e => setForm(f => ({ ...f, assigned_pastor_id: e.target.value }))}
-                    />
+                      onValueChange={val => setForm(f => ({ ...f, assigned_pastor_id: val }))}
+                      disabled={!form.church_id}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={form.church_id ? (pastors.length ? "Select pastor" : "No pastors found") : "Select church first"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pastors.map((pastor) => (
+                          <SelectItem key={pastor.id} value={pastor.id}>{pastor.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
