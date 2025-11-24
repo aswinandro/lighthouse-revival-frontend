@@ -4,7 +4,8 @@ import Image from "next/image"
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
-import { Label } from "@/components/ui/label" // Assuming you have this component
+import { Label } from "@/components/ui/label"
+import { apiClient } from "@/lib/api-client"
 
 // Data for church contacts
 const churchContacts = [
@@ -13,10 +14,10 @@ const churchContacts = [
     language: "Hindi",
     mobile: "+971543655672",
   },
-   {
+  {
     name: "Ashwin Kirupa",
     language: "Tamil",
-    mobile: "+971566434774", // Ensure numbers are in international format for WhatsApp
+    mobile: "+971566434774",
   },
   {
     name: "Shemi Mahfouz Khan",
@@ -29,11 +30,12 @@ const churchContacts = [
     mobile: "+971543791303",
   },
   {
-    name: "General Contact", // For a general or "Other" option
+    name: "General Contact",
     language: "Other",
-    mobile: "+971524514800", // Using a general contact number
+    mobile: "+971524514800",
   },
 ]
+
 export default function PrayerRequestPage() {
   const { toast } = useToast()
   const [form, setForm] = useState({
@@ -43,7 +45,7 @@ export default function PrayerRequestPage() {
     message: "",
   })
   const [loading, setLoading] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false) // New state to track successful submission
+  const [isSubmitted, setIsSubmitted] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState("")
   const [selectedChurchInfo, setSelectedChurchInfo] = useState<
     (typeof churchContacts)[0] | null
@@ -54,42 +56,27 @@ export default function PrayerRequestPage() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  // Send to Google Sheets via Next.js API
+  // Send to Backend via API Client
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setIsSubmitted(false) // Reset submission status on new attempt
+    setIsSubmitted(false)
     try {
-      const res = await fetch("/api/prayer-front", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      })
+      await apiClient.submitPublicPrayerRequest(form)
 
-      if (res.ok) {
-        console.log("API call successful, attempting to show toast."); // Debugging: Check if this logs
-        toast({
-          title: "🙏 Prayer Sent",
-          description: "Your prayer request has been saved successfully. We will be praying for you!",
-          variant: "success", // Added success variant
-        })
-        setForm({ name: "", email: "", phone: "", message: "" })
-        setIsSubmitted(true) // Set to true on successful submission
-      } else {
-        toast({
-          title: "❌ Error",
-          description: "Something went wrong. Please try again.",
-          variant: "destructive",
-        })
-      }
-      // No need to set isSubmitted to false here, as it's already reset at the start
-    } catch (error) {
       toast({
-        title: "⚠️ Network Error",
-        description: "Unable to submit request. Check your connection.",
+        title: "🙏 Prayer Sent",
+        description: "Your prayer request has been saved successfully. We will be praying for you!",
+        variant: "default",
+      })
+      setForm({ name: "", email: "", phone: "", message: "" })
+      setIsSubmitted(true)
+    } catch (error: any) {
+      toast({
+        title: "❌ Error",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       })
-      setIsSubmitted(false) // Ensure it's false on network error
     } finally {
       setLoading(false)
     }
@@ -121,7 +108,7 @@ export default function PrayerRequestPage() {
       return
     }
     const message = `🙏 Prayer Request - From Web\n\nName: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\n\nMessage:\n${form.message}`
-    const cleanMobile = selectedChurchInfo.mobile.replace(/\D/g, "") // Remove non-digits
+    const cleanMobile = selectedChurchInfo.mobile.replace(/\D/g, "")
     const url = `https://wa.me/${cleanMobile}?text=${encodeURIComponent(message)}`
     window.open(url, "_blank")
   }
@@ -257,14 +244,14 @@ export default function PrayerRequestPage() {
                   <div className="flex flex-col sm:flex-row gap-4 mt-4">
                     <button
                       type="submit"
-                      disabled={loading || isSubmitted} // Disable if loading or already submitted
+                      disabled={loading || isSubmitted}
                       className="flex-1 py-3 px-6 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition"
                     >
                       {loading ? "Sending..." : (isSubmitted ? "Successfully Sent!" : "Send Request")}
                     </button>
                     <button
                       type="button"
-                      disabled={!selectedChurchInfo} // Disable if no leader is selected
+                      disabled={!selectedChurchInfo}
                       onClick={handleWhatsApp}
                       className="flex-1 py-3 px-6 rounded-xl bg-green-600 text-white hover:bg-green-700 transition"
                     >
@@ -275,25 +262,6 @@ export default function PrayerRequestPage() {
               </div>
             </motion.div>
           </div>
-
-          {/* About Church Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="mt-24 text-center max-w-4xl mx-auto space-y-6"
-          >
-            {/* <h2 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              About Lighthouse Revival Church
-            </h2> */}
-            {/* <p className="text-lg text-muted-foreground leading-relaxed">
-              Lighthouse Revival Church is a place of hope, healing, and restoration. Since its
-              humble beginnings in 2006, the church has grown into a vibrant community where people
-              of all ages and backgrounds gather to worship, serve, and grow in faith. Under the
-              leadership of Pastor Manoj, the church continues to shine as a testimony of God’s
-              faithfulness and love across nations.
-            </p> */}
-          </motion.div>
 
           {/* Footer */}
           <div className="mt-16 pt-8 border-t border-border text-center text-sm text-muted-foreground">

@@ -110,10 +110,21 @@ class ApiClient {
     })
   }
 
+  async deleteNewcomer(id: string, token: string) {
+    return this.request(`/newcomers/${id}`, {
+      method: "DELETE",
+      token,
+    })
+  }
+
   // Attendance endpoints
   async getAttendance(token: string, params?: { startDate?: string; endDate?: string }) {
     const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ""
     return this.request(`/attendance${queryString}`, { token })
+  }
+
+  async getAttendanceStats(token: string) {
+    return this.request("/attendance/stats", { token })
   }
 
   async recordAttendance(data: any, token: string) {
@@ -137,11 +148,19 @@ class ApiClient {
     })
   }
 
+
   async updatePrayerRequest(id: string, data: any, token: string) {
     return this.request(`/prayer-requests/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
       token,
+    })
+  }
+
+  async submitPublicPrayerRequest(data: any) {
+    return this.request("/prayer-requests/public", {
+      method: "POST",
+      body: JSON.stringify(data),
     })
   }
 
@@ -173,6 +192,18 @@ class ApiClient {
     })
   }
 
+  async getEventRegistrations(id: string, token: string) {
+    return this.request(`/events/${id}/registrations`, { token })
+  }
+
+  async registerForEvent(id: string, data: any, token: string) {
+    return this.request(`/events/${id}/register`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      token,
+    })
+  }
+
   // Courses endpoints
   async getCourses(token: string) {
     return this.request("/courses", { token })
@@ -180,6 +211,26 @@ class ApiClient {
 
   async createCourse(data: any, token: string) {
     return this.request("/courses", {
+      method: "POST",
+      body: JSON.stringify(data),
+      token,
+    })
+  }
+
+  async updateCourse(id: string, data: any, token: string) {
+    return this.request(`/courses/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+      token,
+    })
+  }
+
+  async getCourseEnrollments(id: string, token: string) {
+    return this.request(`/courses/${id}/enrollments`, { token })
+  }
+
+  async enrollMember(id: string, data: { memberId: string }, token: string) {
+    return this.request(`/courses/${id}/enroll`, {
       method: "POST",
       body: JSON.stringify(data),
       token,
@@ -199,9 +250,41 @@ class ApiClient {
     })
   }
 
+  async updateMinistry(id: string, data: any, token: string) {
+    return this.request(`/ministries/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+      token,
+    })
+  }
+
+  async getMinistryMembers(id: string, token: string) {
+    return this.request(`/ministries/${id}/members`, { token })
+  }
+
+  async addMinistryMember(id: string, data: { memberId: string; role: string }, token: string) {
+    return this.request(`/ministries/${id}/members`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      token,
+    })
+  }
+
   // Dashboard endpoints
-  async getDashboardStats(token: string) {
-    return this.request("/dashboard/stats", { token })
+  async getDashboardOverview(token: string) {
+    return this.request("/dashboard/overview", { token })
+  }
+
+  async getAttendanceTrends(token: string) {
+    return this.request("/dashboard/attendance-trends", { token })
+  }
+
+  async getLanguageDistribution(token: string) {
+    return this.request("/dashboard/language-distribution", { token })
+  }
+
+  async getRecentActivity(token: string) {
+    return this.request("/dashboard/recent-activity", { token })
   }
 
   // Churches endpoints
@@ -246,6 +329,14 @@ class ApiClient {
 
   async getChurchMembers(churchId: string, token: string) {
     return this.request(`/churches/${churchId}/members`, { token })
+  }
+
+  async getChurchUsers(churchId: string, token: string) {
+    return this.request(`/churches/${churchId}/users`, { token })
+  }
+
+  async getChurchReports(churchId: string, token: string) {
+    return this.request(`/churches/${churchId}/reports`, { token })
   }
 
   // Preaching Schedules endpoints
@@ -413,6 +504,12 @@ class ApiClient {
   async getMemberAttendanceHistory(memberId: string, token: string, params?: { startDate?: string; endDate?: string }) {
     const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ""
     return this.request(`/qr-attendance/members/${memberId}/history${queryString}`, { token })
+  }
+
+  // Users endpoints
+  async getUsers(token: string, params?: { role?: string; churchId?: string }) {
+    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ""
+    return this.request(`/users${queryString}`, { token })
   }
 }
 

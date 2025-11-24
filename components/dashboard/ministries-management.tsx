@@ -4,76 +4,60 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Church, Users, Music, BookOpen, Heart, UserPlus, MapPin, Calendar } from "lucide-react"
+import { Church, Users, Music, BookOpen, Heart, UserPlus, MapPin, Calendar, Plus } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
+import { useEffect, useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function MinistriesManagement() {
-  const ministries = [
-    {
-      id: 1,
-      name: "Choir Ministry",
-      description: "Leading worship through music and song",
-      leader: "Sarah Wilson",
-      members: 24,
-      category: "Worship",
-      meetingDay: "Wednesday",
-      meetingTime: "7:00 PM",
-      location: "Main Hall",
-      status: "Active",
-      icon: Music,
-    },
-    {
-      id: 2,
-      name: "Teaching Ministry",
-      description: "Bible teaching and discipleship",
-      leader: "Pastor Michael",
-      members: 12,
-      category: "Teaching",
-      meetingDay: "Tuesday",
-      meetingTime: "6:30 PM",
-      location: "Conference Room",
-      status: "Active",
-      icon: BookOpen,
-    },
-    {
-      id: 3,
-      name: "Outreach Ministry",
-      description: "Community outreach and evangelism",
-      leader: "Elder John",
-      members: 18,
-      category: "Outreach",
-      meetingDay: "Saturday",
-      meetingTime: "9:00 AM",
-      location: "Community Center",
-      status: "Active",
-      icon: Heart,
-    },
-    {
-      id: 4,
-      name: "Prayer Ministry",
-      description: "Intercession and prayer support",
-      leader: "Elder Mary",
-      members: 15,
-      category: "Prayer",
-      meetingDay: "Friday",
-      meetingTime: "6:00 PM",
-      location: "Prayer Room",
-      status: "Active",
-      icon: Church,
-    },
-    {
-      id: 5,
-      name: "Youth Ministry",
-      description: "Ministry to young people and teenagers",
-      leader: "David Thomas",
-      members: 32,
-      category: "Youth",
-      meetingDay: "Sunday",
-      meetingTime: "4:00 PM",
-      location: "Youth Hall",
-      status: "Active",
-      icon: Users,
-    },
-  ]
+  const [ministries, setMinistries] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    leader: "",
+    category: "",
+    meetingDay: "",
+    meetingTime: "",
+    location: "",
+    status: "Active"
+  })
+
+  const fetchMinistries = async () => {
+    setLoading(true)
+    try {
+      const token = getToken()
+      if (!token) return
+      const data: any = await apiClient.getMinistries(token)
+      setMinistries(data.data || [])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchMinistries()
+  }, [])
+
+  const handleCreateMinistry = async () => {
+    try {
+      const token = getToken()
+      if (!token) return
+      await apiClient.createMinistry(formData, token)
+      setCreateDialogOpen(false)
+      fetchMinistries()
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const deployments = [
     {
@@ -148,10 +132,75 @@ export function MinistriesManagement() {
           <h2 className="text-2xl font-bold">Ministries Management</h2>
           <p className="text-muted-foreground">Manage church ministries and member deployments</p>
         </div>
-        <Button className="gap-2">
-          <UserPlus className="w-4 h-4" />
-          Deploy Member
-        </Button>
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="w-4 h-4" />
+              Add Ministry
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add New Ministry</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Ministry Name</Label>
+                <Input id="name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select onValueChange={v => setFormData({ ...formData, category: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Worship">Worship</SelectItem>
+                    <SelectItem value="Teaching">Teaching</SelectItem>
+                    <SelectItem value="Outreach">Outreach</SelectItem>
+                    <SelectItem value="Prayer">Prayer</SelectItem>
+                    <SelectItem value="Youth">Youth</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea id="description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="leader">Leader</Label>
+                <Input id="leader" value={formData.leader} onChange={e => setFormData({ ...formData, leader: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input id="location" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="meetingDay">Meeting Day</Label>
+                <Select onValueChange={v => setFormData({ ...formData, meetingDay: v })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Sunday">Sunday</SelectItem>
+                    <SelectItem value="Monday">Monday</SelectItem>
+                    <SelectItem value="Tuesday">Tuesday</SelectItem>
+                    <SelectItem value="Wednesday">Wednesday</SelectItem>
+                    <SelectItem value="Thursday">Thursday</SelectItem>
+                    <SelectItem value="Friday">Friday</SelectItem>
+                    <SelectItem value="Saturday">Saturday</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="meetingTime">Meeting Time</Label>
+                <Input id="meetingTime" placeholder="e.g. 7:00 PM" value={formData.meetingTime} onChange={e => setFormData({ ...formData, meetingTime: e.target.value })} />
+              </div>
+            </div>
+            <Button onClick={handleCreateMinistry}>Create Ministry</Button>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Ministry Stats */}
@@ -160,7 +209,7 @@ export function MinistriesManagement() {
           { label: "Total Ministries", value: ministries.length, icon: Church, color: "bg-primary" },
           {
             label: "Active Members",
-            value: ministries.reduce((sum, m) => sum + m.members, 0),
+            value: ministries.reduce((sum, m) => sum + (m.members || 0), 0),
             icon: Users,
             color: "bg-green-500",
           },
@@ -204,7 +253,7 @@ export function MinistriesManagement() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {ministries.map((ministry) => {
-              const IconComponent = ministry.icon
+              const IconComponent = Church // Default icon for now
               return (
                 <Card key={ministry.id} className="border-l-4 border-l-primary">
                   <CardHeader className="pb-3">
@@ -228,7 +277,7 @@ export function MinistriesManagement() {
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-muted-foreground" />
-                        <span>{ministry.members} members</span>
+                        <span>{ministry.members || 0} members</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-muted-foreground" />

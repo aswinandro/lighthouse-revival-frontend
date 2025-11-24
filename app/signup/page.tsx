@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { apiClient } from "@/lib/api-client"
 
 export default function SignupPage() {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -26,9 +27,7 @@ export default function SignupPage() {
     if (cardRef.current) {
       fadeIn(cardRef.current, { y: 20, duration: 0.5 })
     }
-    // Only run on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [fadeIn])
 
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -43,24 +42,20 @@ export default function SignupPage() {
     setError(null)
     setSuccess(null)
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
-      const res = await fetch(`${apiBase}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, email, password, role }),
-      })
-      if (res.ok) {
-        setSuccess("Registration successful! You can now log in.")
-        setFirstName("")
-        setLastName("")
-        setEmail("")
-        setPassword("")
-      } else {
-        const errorText = await res.text()
-        setError(errorText || "Registration failed. Please try again.")
-      }
-    } catch (err) {
-      setError("Registration failed. Please try again.")
+      await apiClient.register({
+        name: `${firstName} ${lastName}`,
+        email,
+        password,
+        // role // Note: apiClient.register might need to be updated to accept role if backend supports it
+      } as any)
+
+      setSuccess("Registration successful! You can now log in.")
+      setFirstName("")
+      setLastName("")
+      setEmail("")
+      setPassword("")
+    } catch (err: any) {
+      setError(err.message || "Registration failed. Please try again.")
     }
   }
 

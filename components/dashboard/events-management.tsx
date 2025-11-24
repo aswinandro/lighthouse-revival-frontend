@@ -9,66 +9,58 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Calendar, Clock, MapPin, Users, Plus, Edit, Trash2, Eye } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
+import { useEffect } from "react"
 
 export function EventsManagement() {
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "Fasting Prayer",
-      description: "Three-day fasting and prayer event",
-      date: "2024-08-01",
-      endDate: "2024-08-03",
-      time: "Online",
-      location: "Zoom Platform",
-      category: "Prayer",
-      attendees: 150,
-      maxAttendees: 200,
-      status: "Upcoming",
-      organizer: "Pastor Michael",
-    },
-    {
-      id: 2,
-      title: "Water Baptism Service",
-      description: "Special baptism service for new believers",
-      date: "2024-07-27",
-      endDate: "2024-07-27",
-      time: "5:00 PM",
-      location: "G2 Hall at Brethren Church Center",
-      category: "Baptism",
-      attendees: 89,
-      maxAttendees: 100,
-      status: "Upcoming",
-      organizer: "Elder Mary",
-    },
-    {
-      id: 3,
-      title: "Youth Ministry Meeting",
-      description: "Monthly youth gathering and fellowship",
-      date: "2024-07-30",
-      endDate: "2024-07-30",
-      time: "7:00 PM",
-      location: "Youth Hall",
-      category: "Youth",
-      attendees: 45,
-      maxAttendees: 60,
-      status: "Upcoming",
-      organizer: "Youth Pastor David",
-    },
-    {
-      id: 4,
-      title: "Community Outreach",
-      description: "Food distribution to local community",
-      date: "2024-07-20",
-      endDate: "2024-07-20",
-      time: "9:00 AM",
-      location: "Community Center",
-      category: "Outreach",
-      attendees: 75,
-      maxAttendees: 80,
-      status: "Completed",
-      organizer: "Elder John",
-    },
-  ])
+  const [events, setEvents] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    date: "",
+    endDate: "",
+    time: "",
+    location: "",
+    category: "",
+    maxAttendees: "",
+    organizer: ""
+  })
+
+  const fetchEvents = async () => {
+    setLoading(true)
+    try {
+      const token = getToken()
+      if (!token) return
+      const data: any = await apiClient.getEvents(token)
+      setEvents(data.data || [])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchEvents()
+  }, [])
+
+  const handleCreateEvent = async () => {
+    try {
+      const token = getToken()
+      if (!token) return
+      await apiClient.createEvent({
+        ...formData,
+        maxAttendees: parseInt(formData.maxAttendees) || 0
+      }, token)
+      setCreateDialogOpen(false)
+      fetchEvents()
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -110,9 +102,9 @@ export function EventsManagement() {
           <h2 className="text-2xl font-bold">Events Management</h2>
           <p className="text-muted-foreground">Create and manage church events and activities</p>
         </div>
-        <Dialog>
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
               <Plus className="w-4 h-4" />
               Create Event
             </Button>
@@ -124,44 +116,44 @@ export function EventsManagement() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="title">Event Title</Label>
-                <Input id="title" placeholder="Enter event title" />
+                <Input id="title" placeholder="Enter event title" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
               </div>
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Textarea id="description" placeholder="Enter event description" />
+                <Textarea id="description" placeholder="Enter event description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="date">Start Date</Label>
-                <Input id="date" type="date" />
+                <Input id="date" type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endDate">End Date</Label>
-                <Input id="endDate" type="date" />
+                <Input id="endDate" type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="time">Time</Label>
-                <Input id="time" placeholder="e.g., 7:00 PM" />
+                <Input id="time" placeholder="e.g., 7:00 PM" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="maxAttendees">Max Attendees</Label>
-                <Input id="maxAttendees" type="number" placeholder="100" />
+                <Input id="maxAttendees" type="number" placeholder="100" value={formData.maxAttendees} onChange={e => setFormData({ ...formData, maxAttendees: e.target.value })} />
               </div>
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="location">Location</Label>
-                <Input id="location" placeholder="Enter event location" />
+                <Input id="location" placeholder="Enter event location" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Input id="category" placeholder="e.g., Prayer, Youth, Outreach" />
+                <Input id="category" placeholder="e.g., Prayer, Youth, Outreach" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="organizer">Organizer</Label>
-                <Input id="organizer" placeholder="Enter organizer name" />
+                <Input id="organizer" placeholder="Enter organizer name" value={formData.organizer} onChange={e => setFormData({ ...formData, organizer: e.target.value })} />
               </div>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline">Cancel</Button>
-              <Button>Create Event</Button>
+              <Button onClick={handleCreateEvent}>Create Event</Button>
             </div>
           </DialogContent>
         </Dialog>

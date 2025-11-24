@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { apiClient } from "@/lib/api-client"
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,28 +41,17 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-      const res = await fetch(`${apiBase}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        // Support token at top level, or nested under data
-        const token = data.token || data.accessToken || (data.data && data.data.token);
-        if (!token) {
-          setError("No token received from server. Please contact support.");
-          return;
-        }
-        localStorage.setItem("token", token);
-        console.log("Login: Token stored in localStorage", token);
-        router.push("/dashboard");
-      } else {
-        setError("Invalid credentials");
+      const data: any = await apiClient.login(email, password);
+      const token = data.token || data.accessToken || (data.data && data.data.token);
+      if (!token) {
+        setError("No token received from server. Please contact support.");
+        return;
       }
-    } catch (err) {
-      setError("Login failed. Please try again.");
+      localStorage.setItem("token", token);
+      console.log("Login: Token stored in localStorage", token);
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Login failed. Please try again.");
     }
   }
 

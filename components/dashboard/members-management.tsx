@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Edit, Trash2, Mail, Phone, MapPin } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
 
 // Define Member type
 // Define Member type
@@ -47,17 +49,10 @@ export default function MembersManagement() {
     setError("");
     try {
       const churchId = selectedChurch?.id;
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      const url = "http://localhost:5000/api/members";
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error("Failed to fetch members");
-      const data = await response.json();
+      const token = getToken();
+      if (!token) throw new Error("No token found");
+
+      const data: any = await apiClient.getMembers(token);
       let membersRaw: any[] = Array.isArray(data) ? data : (data.members ?? data.data ?? []);
       // If a church is selected, filter by church; otherwise, show all (super admin)
       if (churchId && churchId !== "" && churchId !== "all") {
@@ -100,14 +95,9 @@ export default function MembersManagement() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/members", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(memberData),
-      });
-      if (!response.ok) throw new Error("Failed to add member");
+      const token = getToken();
+      if (!token) throw new Error("No token found");
+      await apiClient.createMember(memberData, token);
       await loadMembers();
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
@@ -121,13 +111,9 @@ export default function MembersManagement() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/members/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      if (!response.ok) throw new Error("Failed to delete member");
+      const token = getToken();
+      if (!token) throw new Error("No token found");
+      await apiClient.deleteMember(id, token);
       await loadMembers();
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
@@ -141,14 +127,9 @@ export default function MembersManagement() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`/api/members/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(memberData),
-      });
-      if (!response.ok) throw new Error("Failed to update member");
+      const token = getToken();
+      if (!token) throw new Error("No token found");
+      await apiClient.updateMember(id, memberData, token);
       await loadMembers();
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
@@ -157,6 +138,8 @@ export default function MembersManagement() {
       setLoading(false);
     }
   }
+
+
 
   const getRoleColor = (role: string) => {
     switch (role) {

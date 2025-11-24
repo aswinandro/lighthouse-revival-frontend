@@ -76,7 +76,7 @@ export default function QRScanPage() {
     try {
       const response = await apiClient.quickSignUp({
         qrCode,
-        newcomerData: signUpData,
+        ...signUpData,
       }) as any;
 
       toast({

@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Eye, CheckCircle } from "lucide-react"
 import { useChurch } from "@/components/providers/church-context"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
 
 
 import React, { useEffect, useState } from "react"
@@ -42,18 +44,10 @@ export default function PreachingSchedulesManagement() {
       setPastors([])
       if (!form.church_id) return
       try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
-        // Use the correct role value for user_church_roles
-        const url = `${baseUrl}/api/users?role=church_pastor&churchId=${form.church_id}`
-        const response = await fetch(url, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        })
-        if (!response.ok) throw new Error("Failed to fetch pastors")
-        const data = await response.json()
+        const token = getToken()
+        if (!token) return // Or handle error
+
+        const data: any = await apiClient.getUsers(token, { role: "church_pastor", churchId: form.church_id })
         // Expecting array of users with id and name
         const usersRaw = Array.isArray(data) ? data : (data.users ?? data.data ?? [])
         setPastors(usersRaw.map((u: any) => ({
@@ -72,20 +66,15 @@ export default function PreachingSchedulesManagement() {
     setLoading(true)
     setError("")
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
-      let url = `${baseUrl}/api/preaching-schedules`
+      const token = getToken()
+      if (!token) throw new Error("No token found")
+
+      const params: any = {}
       if (userRole !== "super_admin" && selectedChurch?.id) {
-        url += `?churchId=${selectedChurch.id}`
+        params.churchId = selectedChurch.id
       }
-      const response = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      })
-      if (!response.ok) throw new Error("Failed to fetch schedules")
-      const data = await response.json()
+
+      const data: any = await apiClient.getPreachingSchedules(token, params)
       const mapped = (data.data ?? []).map((s: any) => ({
         id: s.id,
         church: s.church_name,
@@ -117,17 +106,11 @@ export default function PreachingSchedulesManagement() {
     setAssignLoading(true)
     setAssignError("")
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
-      const response = await fetch(`${baseUrl}/api/preaching-schedules`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(form),
-      })
-      if (!response.ok) throw new Error("Failed to assign topic")
+      const token = getToken()
+      if (!token) throw new Error("No token found")
+
+      await apiClient.createPreachingSchedule(form, token)
+
       setAssignSuccess(true)
       setAssignDialogOpen(false)
       setForm({

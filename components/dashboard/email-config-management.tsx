@@ -9,37 +9,65 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Mail, Plus, Edit, Trash2 } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
+import { useEffect, useState } from "react"
+import { useChurch } from "@/components/providers/church-context"
 
 export function EmailConfigManagement() {
-  const emailConfigs = [
-    {
-      id: "1",
-      church: "Abu Dhabi Church",
-      leaderName: "Elder Mary",
-      leaderEmail: "mary@church.ae",
-      role: "Prayer Coordinator",
-      priority: 1,
-      isActive: true,
-    },
-    {
-      id: "2",
-      church: "Abu Dhabi Church",
-      leaderName: "Elder John",
-      leaderEmail: "john@church.ae",
-      role: "Assistant Pastor",
-      priority: 2,
-      isActive: true,
-    },
-    {
-      id: "3",
-      church: "Dubai Church",
-      leaderName: "Elder Sarah",
-      leaderEmail: "sarah@church.ae",
-      role: "Prayer Leader",
-      priority: 1,
-      isActive: true,
-    },
-  ]
+  const [emailConfigs, setEmailConfigs] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const { churches } = useChurch()
+  const [formData, setFormData] = useState({
+    churchId: "",
+    leaderName: "",
+    leaderEmail: "",
+    role: "",
+    priority: 1
+  })
+
+  const fetchConfigs = async () => {
+    setLoading(true)
+    try {
+      const token = getToken()
+      if (!token) return
+      const data: any = await apiClient.getPrayerEmailConfigs(token)
+      setEmailConfigs(data.data || [])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchConfigs()
+  }, [])
+
+  const handleCreateConfig = async () => {
+    try {
+      const token = getToken()
+      if (!token) return
+      await apiClient.createPrayerEmailConfig(formData, token)
+      setCreateDialogOpen(false)
+      fetchConfigs()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleDeleteConfig = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this configuration?")) return
+    try {
+      const token = getToken()
+      if (!token) return
+      await apiClient.deletePrayerEmailConfig(id, token)
+      fetchConfigs()
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -49,9 +77,9 @@ export function EmailConfigManagement() {
           <h2 className="text-2xl font-bold">Prayer Request Email Configuration</h2>
           <p className="text-muted-foreground">Configure email routing for prayer requests by church</p>
         </div>
-        <Dialog>
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
+            <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
               <Plus className="w-4 h-4" />
               Add Email Config
             </Button>
@@ -63,40 +91,40 @@ export function EmailConfigManagement() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Church</Label>
-                <Select>
+                <Select onValueChange={v => setFormData({ ...formData, churchId: v })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select church" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Abu Dhabi Church</SelectItem>
-                    <SelectItem value="2">Dubai Church</SelectItem>
-                    <SelectItem value="3">Sharjah Church</SelectItem>
+                    {churches.map(church => (
+                      <SelectItem key={church.id} value={church.id}>{church.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Leader Name</Label>
-                <Input placeholder="Enter leader name" />
+                <Input placeholder="Enter leader name" value={formData.leaderName} onChange={e => setFormData({ ...formData, leaderName: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Leader Email</Label>
-                <Input type="email" placeholder="leader@church.ae" />
+                <Input type="email" placeholder="leader@church.ae" value={formData.leaderEmail} onChange={e => setFormData({ ...formData, leaderEmail: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Role/Position</Label>
-                <Input placeholder="e.g., Prayer Coordinator" />
+                <Input placeholder="e.g., Prayer Coordinator" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Priority Order</Label>
-                <Input type="number" placeholder="1" min="1" />
+                <Input type="number" placeholder="1" min="1" value={formData.priority} onChange={e => setFormData({ ...formData, priority: parseInt(e.target.value) })} />
                 <p className="text-xs text-muted-foreground">
                   Lower numbers receive emails first (1 = highest priority)
                 </p>
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline">Cancel</Button>
-              <Button>Add Configuration</Button>
+              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleCreateConfig}>Add Configuration</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -140,9 +168,9 @@ export function EmailConfigManagement() {
             <TableBody>
               {emailConfigs.map((config) => (
                 <TableRow key={config.id}>
-                  <TableCell className="font-medium">{config.church}</TableCell>
-                  <TableCell>{config.leaderName}</TableCell>
-                  <TableCell>{config.leaderEmail}</TableCell>
+                  <TableCell className="font-medium">{config.church?.name || config.church_name || "Unknown"}</TableCell>
+                  <TableCell>{config.leader_name || config.leaderName}</TableCell>
+                  <TableCell>{config.leader_email || config.leaderEmail}</TableCell>
                   <TableCell>{config.role}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{config.priority}</Badge>
@@ -157,7 +185,7 @@ export function EmailConfigManagement() {
                       <Button variant="ghost" size="sm">
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive">
+                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteConfig(config.id)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>

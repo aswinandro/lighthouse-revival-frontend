@@ -6,55 +6,58 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BookOpen, Users, Award, Clock, Plus, Eye } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
+import { useEffect, useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 export function CoursesManagement() {
-  const courses = [
-    {
-      id: 1,
-      title: "Father's House Bible Study",
-      description: "Foundational Bible study for newcomers",
-      duration: "8 weeks",
-      enrolled: 45,
-      completed: 32,
-      status: "Active",
-      instructor: "Pastor Michael",
-      nextSession: "2024-01-25",
-    },
-    {
-      id: 2,
-      title: "Life in Christ",
-      description: "Deeper understanding of Christian living",
-      duration: "12 weeks",
-      enrolled: 28,
-      completed: 15,
-      status: "Active",
-      instructor: "Elder Mary",
-      nextSession: "2024-01-27",
-    },
-    {
-      id: 3,
-      title: "Ministry Orientation School",
-      description: "Preparation for ministry deployment",
-      duration: "6 weeks",
-      enrolled: 18,
-      completed: 12,
-      status: "Active",
-      instructor: "Pastor Michael",
-      nextSession: "2024-01-26",
-    },
-    {
-      id: 4,
-      title: "Leadership Development",
-      description: "Training for church leadership roles",
-      duration: "16 weeks",
-      enrolled: 12,
-      completed: 8,
-      status: "Planning",
-      instructor: "Elder John",
-      nextSession: "2024-02-01",
-    },
-  ]
+  const [courses, setCourses] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    duration: "",
+    instructor: "",
+    startDate: "",
+    status: "Planning"
+  })
 
+  const fetchCourses = async () => {
+    setLoading(true)
+    try {
+      const token = getToken()
+      if (!token) return
+      const data: any = await apiClient.getCourses(token)
+      setCourses(data.data || [])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchCourses()
+  }, [])
+
+  const handleCreateCourse = async () => {
+    try {
+      const token = getToken()
+      if (!token) return
+      await apiClient.createCourse(formData, token)
+      setCreateDialogOpen(false)
+      fetchCourses()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  // Mock students for now as getting all enrollments requires multiple calls
   const students = [
     {
       name: "John Doe",
@@ -64,30 +67,7 @@ export function CoursesManagement() {
       startDate: "2024-01-01",
       expectedCompletion: "2024-02-26",
     },
-    {
-      name: "Sarah Wilson",
-      course: "Life in Christ",
-      progress: 60,
-      status: "Pursuing",
-      startDate: "2023-12-15",
-      expectedCompletion: "2024-03-15",
-    },
-    {
-      name: "Michael Johnson",
-      course: "Ministry Orientation School",
-      progress: 100,
-      status: "Completed",
-      startDate: "2023-11-01",
-      expectedCompletion: "2023-12-15",
-    },
-    {
-      name: "Priya Sharma",
-      course: "Father's House Bible Study",
-      progress: 45,
-      status: "Pursuing",
-      startDate: "2024-01-08",
-      expectedCompletion: "2024-03-04",
-    },
+    // ... keep mock students
   ]
 
   const getStatusColor = (status: string) => {
@@ -117,10 +97,42 @@ export function CoursesManagement() {
           <h2 className="text-2xl font-bold">Courses Management</h2>
           <p className="text-muted-foreground">Manage church courses and track student progress</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="w-4 h-4" />
-          Add Course
-        </Button>
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="w-4 h-4" />
+              Add Course
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Course</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Course Title</Label>
+                <Input id="title" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea id="description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration</Label>
+                <Input id="duration" placeholder="e.g. 8 weeks" value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instructor">Instructor</Label>
+                <Input id="instructor" value={formData.instructor} onChange={e => setFormData({ ...formData, instructor: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Start Date</Label>
+                <Input id="startDate" type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} />
+              </div>
+            </div>
+            <Button onClick={handleCreateCourse}>Create Course</Button>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Course Stats */}
@@ -135,13 +147,13 @@ export function CoursesManagement() {
           },
           {
             label: "Total Students",
-            value: courses.reduce((sum, c) => sum + c.enrolled, 0),
+            value: courses.reduce((sum, c) => sum + (c.enrolled || 0), 0),
             icon: Users,
             color: "bg-blue-500",
           },
           {
             label: "Completed",
-            value: courses.reduce((sum, c) => sum + c.completed, 0),
+            value: courses.reduce((sum, c) => sum + (c.completed || 0), 0),
             icon: Award,
             color: "bg-purple-500",
           },
@@ -195,19 +207,19 @@ export function CoursesManagement() {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Enrolled:</span>
-                      <p className="font-medium">{course.enrolled} students</p>
+                      <p className="font-medium">{course.enrolled || 0} students</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Completed:</span>
-                      <p className="font-medium">{course.completed} students</p>
+                      <p className="font-medium">{course.completed || 0} students</p>
                     </div>
                   </div>
                   <div>
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span className="text-muted-foreground">Completion Rate</span>
-                      <span className="font-medium">{Math.round((course.completed / course.enrolled) * 100)}%</span>
+                      <span className="font-medium">{course.enrolled ? Math.round((course.completed / course.enrolled) * 100) : 0}%</span>
                     </div>
-                    <Progress value={(course.completed / course.enrolled) * 100} className="h-2" />
+                    <Progress value={course.enrolled ? (course.completed / course.enrolled) * 100 : 0} className="h-2" />
                   </div>
                   <div className="flex items-center justify-between pt-2">
                     <div className="text-sm">

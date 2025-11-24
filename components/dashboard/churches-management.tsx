@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Building2, Plus, Users, DollarSign, TrendingUp, Eye, Edit, UserPlus } from "lucide-react"
 
 import React, { useEffect, useState } from "react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
 
 type Church = {
   id: string
@@ -43,16 +45,10 @@ export function ChurchesManagement() {
     setLoading(true)
     setError("")
     try {
-      const token = localStorage.getItem("token")
-      const res = await fetch("http://localhost:5000/api/churches", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      })
-      if (!res.ok) throw new Error("Failed to fetch churches")
-      const data = await res.json()
+      const token = getToken()
+      if (!token) throw new Error("No token found")
+
+      const data: any = await apiClient.getChurches(token)
       setChurches(data.data || [])
     } catch (e) {
       if (e instanceof Error) {
@@ -71,16 +67,10 @@ export function ChurchesManagement() {
     setError("")
     try {
       if (!churchId) return setUsers([])
-      const token = localStorage.getItem("token")
-      const res = await fetch(`http://localhost:5000/api/churches/${churchId}/users`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      })
-      if (!res.ok) throw new Error("Failed to fetch users")
-      const data = await res.json()
+      const token = getToken()
+      if (!token) throw new Error("No token found")
+
+      const data: any = await apiClient.getChurchUsers(churchId, token)
       setUsers(data.data || [])
     } catch (e) {
       if (e instanceof Error) {

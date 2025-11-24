@@ -10,8 +10,11 @@ import { Badge } from "@/components/ui/badge"
 import { apiClient } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { QrCode, Users, Calendar, Clock } from "lucide-react"
+import { useChurch } from "@/components/providers/church-context"
+import { getToken } from "@/lib/utils"
 
-export function QRAttendanceManagement({ churchId, token }: { churchId: string; token: string }) {
+export function QRAttendanceManagement() {
+  const { selectedChurch } = useChurch()
   const [sessions, setSessions] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -20,7 +23,6 @@ export function QRAttendanceManagement({ churchId, token }: { churchId: string; 
   const { toast } = useToast()
 
   const [newSession, setNewSession] = useState({
-    churchId,
     sessionName: "",
     sessionDate: "",
     sessionTime: "",
@@ -30,13 +32,17 @@ export function QRAttendanceManagement({ churchId, token }: { churchId: string; 
   })
 
   useEffect(() => {
-    loadSessions()
-  }, [churchId])
+    if (selectedChurch) {
+      loadSessions()
+    }
+  }, [selectedChurch])
 
   const loadSessions = async () => {
     setLoading(true)
     try {
-      const response = await apiClient.getQRSessions(churchId, token, { isActive: true }) as any
+      const token = getToken()
+      if (!token || !selectedChurch) return
+      const response = await apiClient.getQRSessions(selectedChurch.id, token, { isActive: true }) as any
       setSessions(response.data || [])
     } catch (error: any) {
       toast({
@@ -61,7 +67,9 @@ export function QRAttendanceManagement({ churchId, token }: { churchId: string; 
 
     setLoading(true)
     try {
-      await apiClient.createQRSession(newSession, token)
+      const token = getToken()
+      if (!token || !selectedChurch) return
+      await apiClient.createQRSession({ ...newSession, churchId: selectedChurch.id }, token)
       toast({
         title: "Success",
         description: "QR session created successfully",
@@ -69,7 +77,6 @@ export function QRAttendanceManagement({ churchId, token }: { churchId: string; 
       setShowCreateDialog(false)
       loadSessions()
       setNewSession({
-        churchId,
         sessionName: "",
         sessionDate: "",
         sessionTime: "",
@@ -92,6 +99,8 @@ export function QRAttendanceManagement({ churchId, token }: { churchId: string; 
     setSelectedSession(session)
     setLoading(true)
     try {
+      const token = getToken()
+      if (!token) return
       const response = await apiClient.getSessionAttendance(session.id, token) as any
       setAttendanceRecords(response.data || [])
     } catch (error: any) {
@@ -110,6 +119,8 @@ export function QRAttendanceManagement({ churchId, token }: { churchId: string; 
 
     setLoading(true)
     try {
+      const token = getToken()
+      if (!token) return
       await apiClient.deactivateQRSession(sessionId, token)
       toast({
         title: "Success",

@@ -1,62 +1,52 @@
 "use client"
 
-import { useState } from "react"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { CheckCircle, XCircle, Clock, Eye, MessageSquare, UserCheck } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
+import { useEffect, useState } from "react"
 
 export function NewcomersManagement() {
+  const [newcomers, setNewcomers] = useState<any[]>([])
   const [selectedNewcomer, setSelectedNewcomer] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
 
-  const newcomers = [
-    {
-      id: 1,
-      name: "Alice Johnson",
-      email: "alice@example.com",
-      country: "Philippines",
-      language: "English",
-      status: "Pending",
-      comments: "Interested in joining the choir ministry",
-      submittedAt: "2024-01-20",
-      followUpDate: "2024-01-25",
-    },
-    {
-      id: 2,
-      name: "Raj Patel",
-      email: "raj@example.com",
-      country: "India",
-      language: "Hindi",
-      status: "Approved",
-      comments: "Looking for Bible study groups",
-      submittedAt: "2024-01-18",
-      followUpDate: "2024-01-23",
-    },
-    {
-      id: 3,
-      name: "Maria Santos",
-      email: "maria@example.com",
-      country: "Philippines",
-      language: "English",
-      status: "Pending",
-      comments: "New to Abu Dhabi, seeking community",
-      submittedAt: "2024-01-22",
-      followUpDate: "2024-01-27",
-    },
-    {
-      id: 4,
-      name: "Kumar Krishnan",
-      email: "kumar@example.com",
-      country: "India",
-      language: "Malayalam",
-      status: "Follow-up",
-      comments: "Interested in youth ministry",
-      submittedAt: "2024-01-15",
-      followUpDate: "2024-01-20",
-    },
-  ]
+  const fetchNewcomers = async () => {
+    setLoading(true)
+    try {
+      const token = getToken()
+      if (!token) return
+      const data: any = await apiClient.getNewcomers(token)
+      setNewcomers(data.data || [])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchNewcomers()
+  }, [])
+
+  const handleStatusChange = async (newcomerId: string, newStatus: string) => {
+    try {
+      const token = getToken()
+      if (!token) return
+      await apiClient.updateNewcomer(newcomerId, { status: newStatus }, token)
+      fetchNewcomers()
+      if (selectedNewcomer && selectedNewcomer.id === newcomerId) {
+        setSelectedNewcomer({ ...selectedNewcomer, status: newStatus })
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -88,10 +78,7 @@ export function NewcomersManagement() {
     }
   }
 
-  const handleStatusChange = (newcomerId: number, newStatus: string) => {
-    // Handle status change logic here
-    console.log(`Changing status of newcomer ${newcomerId} to ${newStatus}`)
-  }
+
 
   return (
     <div className="space-y-6">
