@@ -107,6 +107,13 @@ export function ChurchesManagement() {
     }
   }
 
+  const formatRole = (role: string) => {
+    return role
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
   useEffect(() => {
     loadChurches()
     loadAllSystemUsers()
@@ -203,12 +210,47 @@ export function ChurchesManagement() {
     try {
       const token = getToken()
       if (!token) return
-      await apiClient.updateChurch(editingChurch.id, editingChurch, token)
+      // Map frontend fields back to backend if necessary
+      const updateData = {
+        name: editingChurch.name,
+        city: editingChurch.city,
+        country: editingChurch.country,
+        address: (editingChurch as any).address,
+        phone: (editingChurch as any).phone,
+        email: (editingChurch as any).email
+      }
+      await apiClient.updateChurch(editingChurch.id, updateData, token)
       setIsEditChurchOpen(false)
       loadChurches()
     } catch (e) {
       console.error(e)
       setError("Failed to update church")
+    }
+  }
+
+  // View Church states
+  const [viewingChurch, setViewingChurch] = useState<any>(null)
+  const [isViewChurchOpen, setIsViewChurchOpen] = useState(false)
+
+  // Edit Assignment states
+  const [editingAssignment, setEditingAssignment] = useState<User | null>(null)
+  const [isEditAssignmentOpen, setIsEditAssignmentOpen] = useState(false)
+  const [editRoleForm, setEditRoleForm] = useState("church_pastor")
+
+  const handleUpdateAssignment = async () => {
+    if (!editingAssignment || !selectedChurchForUsers) return
+    try {
+      const token = getToken()
+      if (!token) return
+      await apiClient.assignUserToChurch(selectedChurchForUsers, {
+        userId: editingAssignment.id,
+        role: editRoleForm
+      }, token)
+      setIsEditAssignmentOpen(false)
+      loadUsers(selectedChurchForUsers)
+    } catch (e) {
+      console.error(e)
+      setError("Failed to update assignment")
     }
   }
 
@@ -381,7 +423,10 @@ export function ChurchesManagement() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        setViewingChurch(church)
+                        setIsViewChurchOpen(true)
+                      }}>
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => {
@@ -470,7 +515,7 @@ export function ChurchesManagement() {
                       <SelectItem value="church_pastor">Church Pastor</SelectItem>
                       <SelectItem value="church_leader">Church Leader</SelectItem>
                       <SelectItem value="church_believer">Church Believer</SelectItem>
-                      <SelectItem value="super_admin">Super Admin (Chief Pastor)</SelectItem>
+                      <SelectItem value="super_admin">Super Admin</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -500,11 +545,17 @@ export function ChurchesManagement() {
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.church}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{user.role.replace("_", " ")}</Badge>
+                    <Badge variant="outline" className="capitalize bg-primary/10 text-primary border-primary/20">
+                      {formatRole(user.role)}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        setEditingAssignment(user)
+                        setEditRoleForm(user.role)
+                        setIsEditAssignmentOpen(true)
+                      }}>
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleUnassignUser(user.id, user.church)}>
@@ -552,12 +603,138 @@ export function ChurchesManagement() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsEditChurchOpen(false)}>Cancel</Button>
+              <div className="space-y-2">
+                <Label htmlFor="editAddress">Address</Label>
+                <Textarea
+                  id="editAddress"
+                  value={(editingChurch as any).address || ""}
+                  onChange={(e) => setEditingChurch({ ...editingChurch, address: e.target.value } as any)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editPhone">Phone</Label>
+                  <Input
+                    id="editPhone"
+                    value={(editingChurch as any).phone || ""}
+                    onChange={(e) => setEditingChurch({ ...editingChurch, phone: e.target.value } as any)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editEmail">Email</Label>
+                  <Input
+                    id="editEmail"
+                    value={(editingChurch as any).email || ""}
+                    onChange={(e) => setEditingChurch({ ...editingChurch, email: e.target.value } as any)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 text-primary-foreground">
+                <Button variant="outline" className="text-foreground" onClick={() => setIsEditChurchOpen(false)}>Cancel</Button>
                 <Button onClick={handleEditChurch}>Update Church</Button>
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      {/* Edit Assignment Dialog */}
+      <Dialog open={isEditAssignmentOpen} onOpenChange={setIsEditAssignmentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update User Role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">User</p>
+              <p className="text-sm text-muted-foreground">{editingAssignment?.name} ({editingAssignment?.email})</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={editRoleForm} onValueChange={setEditRoleForm}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="church_pastor">Church Pastor</SelectItem>
+                  <SelectItem value="church_leader">Church Leader</SelectItem>
+                  <SelectItem value="church_believer">Church Believer</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsEditAssignmentOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateAssignment}>Update Role</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Church Details Dialog */}
+      <Dialog open={isViewChurchOpen} onOpenChange={setIsViewChurchOpen}>
+        <DialogContent className="max-w-2xl bg-slate-900 border-slate-800 text-slate-100">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Church Details</DialogTitle>
+          </DialogHeader>
+          {viewingChurch && (
+            <div className="space-y-6 py-4">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">Church Name</Label>
+                  <p className="text-lg font-bold text-white">{viewingChurch.name}</p>
+                </div>
+                <div className="space-y-1 text-right sm:text-left">
+                  <Label className="text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">Status</Label>
+                  <div>
+                    <Badge className={viewingChurch.status === 'Active' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-slate-700 text-slate-400 border-slate-600'}>
+                      {viewingChurch.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">Location</Label>
+                  <p className="text-slate-300">{viewingChurch.city}, {viewingChurch.country}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">Email</Label>
+                  <p className="text-slate-300">{viewingChurch.email || 'N/A'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">Phone</Label>
+                  <p className="text-slate-300">{viewingChurch.phone || 'N/A'}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">Members</Label>
+                  <p className="text-slate-300">{viewingChurch.members || 0}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-4 border-t border-slate-800">
+                <Label className="text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">Address</Label>
+                <p className="text-sm text-slate-400 leading-relaxed">{viewingChurch.address || 'No address provided'}</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-800">
+                <div className="p-3 bg-green-500/10 rounded-xl border border-green-500/20">
+                  <p className="text-[10px] text-green-400/70 font-bold uppercase tracking-tight">Total Income</p>
+                  <p className="text-lg font-black text-green-400">${(viewingChurch.income || 0).toLocaleString()}</p>
+                </div>
+                <div className="p-3 bg-red-500/10 rounded-xl border border-red-500/20">
+                  <p className="text-[10px] text-red-400/70 font-bold uppercase tracking-tight">Total Expenses</p>
+                  <p className="text-lg font-black text-red-400">${(viewingChurch.expenses || 0).toLocaleString()}</p>
+                </div>
+                <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                  <p className="text-[10px] text-indigo-400/70 font-bold uppercase tracking-tight">Net Profit</p>
+                  <p className="text-lg font-black text-indigo-400">
+                    ${((viewingChurch.income || 0) - (viewingChurch.expenses || 0)).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex justify-end pt-2">
+            <Button variant="outline" className="border-slate-700 hover:bg-slate-800" onClick={() => setIsViewChurchOpen(false)}>Close</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
