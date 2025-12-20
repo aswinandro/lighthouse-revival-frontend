@@ -330,9 +330,17 @@ class ApiClient {
   }
 
   async assignUserToChurch(churchId: string, data: { userId: string; role: string }, token: string) {
-    return this.request(`/churches/${churchId}/assign-user`, {
+    return this.request(`/churches/${churchId}/users`, {
       method: "POST",
       body: JSON.stringify(data),
+      token,
+    })
+  }
+
+  async unassignUserFromChurch(churchId: string, userId: string, token: string) {
+    return this.request(`/churches/${churchId}/users`, {
+      method: "DELETE",
+      body: JSON.stringify({ userId }),
       token,
     })
   }
