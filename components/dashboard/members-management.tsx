@@ -42,6 +42,21 @@ export default function MembersManagement() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    gender: "Male",
+    membership_status: "Active",
+    preferred_language: "English",
+    city: "",
+    country: "",
+    notes: ""
+  });
 
   // Fetch members from backend REST API
   async function loadMembers() {
@@ -62,14 +77,14 @@ export default function MembersManagement() {
       let membersArray: Member[] = membersRaw.map((m) => ({
         id: String(m.id),
         name: m.first_name && m.last_name ? `${m.first_name} ${m.last_name}` : m.first_name || m.last_name || m.name || "",
-        email: m.email,
-        phone: m.phone,
-        role: m.membership_status || m.role || "",
-        status: m.membership_status || m.status || "",
+        email: m.email || "",
+        phone: m.phone || "",
+        role: m.membership_status || "",
+        status: m.membership_status || "",
         emirate: m.city || "",
         country: m.country || "",
-        preferred_service: m.preferred_language || m.preferred_service || "",
-        church_id: String(m.church_id),
+        preferred_service: m.preferred_language || "",
+        church_id: String(m.church_id || ""),
         joined_at: m.membership_date ? (typeof m.membership_date === "string" ? m.membership_date.split("T")[0] : m.membership_date) : "",
         notes: m.notes || "",
         created_at: m.created_at || "",
@@ -87,17 +102,39 @@ export default function MembersManagement() {
   // Initial load
   React.useEffect(() => {
     loadMembers();
-    // reload when selectedChurch changes
   }, [selectedChurch]);
 
+  const resetForm = () => {
+    setFormData({
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
+      gender: "Male",
+      membership_status: "Active",
+      preferred_language: "English",
+      city: "",
+      country: "",
+      notes: ""
+    });
+  };
+
   // Add, update, delete handlers
-  async function handleAddMember(memberData: Omit<Member, "id">) {
+  async function handleAddMember() {
     setLoading(true);
     setError("");
     try {
       const token = getToken();
       if (!token) throw new Error("No token found");
-      await apiClient.createMember(memberData, token);
+
+      const payload = {
+        ...formData,
+        church_id: selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
+      };
+
+      await apiClient.createMember(payload, token);
+      setIsAddDialogOpen(false);
+      resetForm();
       await loadMembers();
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
@@ -108,6 +145,7 @@ export default function MembersManagement() {
   }
 
   async function handleDeleteMember(id: Member["id"]) {
+    if (!confirm("Are you sure you want to delete this member?")) return;
     setLoading(true);
     setError("");
     try {
@@ -123,13 +161,17 @@ export default function MembersManagement() {
     }
   }
 
-  async function handleUpdateMember(id: Member["id"], memberData: Partial<Member>) {
+  async function handleUpdateMember() {
+    if (!editingMember) return;
     setLoading(true);
     setError("");
     try {
       const token = getToken();
       if (!token) throw new Error("No token found");
-      await apiClient.updateMember(id, memberData, token);
+      await apiClient.updateMember(editingMember.id, formData, token);
+      setIsEditDialogOpen(false);
+      setEditingMember(null);
+      resetForm();
       await loadMembers();
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
@@ -139,7 +181,29 @@ export default function MembersManagement() {
     }
   }
 
-
+  const openEditDialog = (member: Member) => {
+    // We need to fetch original data or find it in members list
+    // Backend returns first_name, last_name etc. but frontend Member has name
+    // Finding raw member to populate form
+    const rawMember = members.find(m => m.id === member.id);
+    if (rawMember) {
+      const nameParts = rawMember.name.split(' ');
+      setFormData({
+        first_name: nameParts[0] || "",
+        last_name: nameParts.slice(1).join(' ') || "",
+        email: rawMember.email || "",
+        phone: rawMember.phone || "",
+        gender: "Male",
+        membership_status: rawMember.status || "Active",
+        preferred_language: rawMember.preferred_service || "English",
+        city: rawMember.emirate || "",
+        country: rawMember.country || "",
+        notes: rawMember.notes || ""
+      });
+      setEditingMember(member);
+      setIsEditDialogOpen(true);
+    }
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -163,11 +227,230 @@ export default function MembersManagement() {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  // Add error/loading UI
   return (
     <div className="space-y-6">
-      {error && <div className="text-red-500">{error}</div>}
-      {loading && <div className="text-muted-foreground">Loading...</div>}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Members Management</h2>
+          <p className="text-muted-foreground">Manage your church members and their roles</p>
+        </div>
+        <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm(); }}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="w-4 h-4" />
+              Add Member
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add New Member</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="first_name">First Name</Label>
+                <Input
+                  id="first_name"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  placeholder="John"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last_name">Last Name</Label>
+                <Input
+                  id="last_name"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  placeholder="Doe"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="john@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+971..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Gender</Label>
+                <Select value={formData.gender} onValueChange={(val) => setFormData({ ...formData, gender: val })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Language</Label>
+                <Select value={formData.preferred_language} onValueChange={(val) => setFormData({ ...formData, preferred_language: val })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Tamil">Tamil</SelectItem>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                    <SelectItem value="Malayalam">Malayalam</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Role / Status</Label>
+                <Select value={formData.membership_status} onValueChange={(val) => setFormData({ ...formData, membership_status: val })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active Member</SelectItem>
+                    <SelectItem value="Elder">Elder</SelectItem>
+                    <SelectItem value="Pastor">Pastor</SelectItem>
+                    <SelectItem value="Lifetime">Lifetime Member</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="Dubai"
+                />
+              </div>
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Any additional info..."
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleAddMember} disabled={loading}>
+                {loading ? "Adding..." : "Add Member"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) setEditingMember(null); }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Member</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_first_name">First Name</Label>
+                <Input
+                  id="edit_first_name"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_last_name">Last Name</Label>
+                <Input
+                  id="edit_last_name"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_email">Email</Label>
+                <Input
+                  id="edit_email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_phone">Phone</Label>
+                <Input
+                  id="edit_phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Language</Label>
+                <Select value={formData.preferred_language} onValueChange={(val) => setFormData({ ...formData, preferred_language: val })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Tamil">Tamil</SelectItem>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                    <SelectItem value="Malayalam">Malayalam</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Role / Status</Label>
+                <Select value={formData.membership_status} onValueChange={(val) => setFormData({ ...formData, membership_status: val })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active Member</SelectItem>
+                    <SelectItem value="Elder">Elder</SelectItem>
+                    <SelectItem value="Pastor">Pastor</SelectItem>
+                    <SelectItem value="Lifetime">Lifetime Member</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_city">City</Label>
+                <Input
+                  id="edit_city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                />
+              </div>
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="edit_notes">Notes</Label>
+                <Textarea
+                  id="edit_notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleUpdateMember} disabled={loading}>
+                {loading ? "Updating..." : "Update Member"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {error && <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">{error}</div>}
+
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
@@ -262,7 +545,7 @@ export default function MembersManagement() {
                     <TableCell className="text-sm">{member.joined_at}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleUpdateMember(member.id, member)}>
+                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(member)}>
                           <Edit className="w-4 h-4" />
                         </Button>
                         <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteMember(member.id)}>
