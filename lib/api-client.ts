@@ -123,8 +123,9 @@ class ApiClient {
     return this.request(`/attendance${queryString}`, { token })
   }
 
-  async getAttendanceStats(token: string) {
-    return this.request("/attendance/stats", { token })
+  async getAttendanceStats(token: string, params?: { startDate?: string; endDate?: string; churchId?: string }) {
+    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ""
+    return this.request(`/attendance/stats${queryString}`, { token })
   }
 
   async recordAttendance(data: any, token: string) {

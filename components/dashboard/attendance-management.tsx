@@ -11,7 +11,10 @@ import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect, useState } from "react"
 
+import { useChurch } from "@/components/providers/church-context"
+
 export function AttendanceManagement() {
+  const { selectedChurch } = useChurch()
   const [attendanceData, setAttendanceData] = useState<any[]>([])
   const [todayAttendance, setTodayAttendance] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -23,10 +26,12 @@ export function AttendanceManagement() {
         const token = getToken()
         if (!token) return
 
-        const stats: any = await apiClient.getAttendanceStats(token)
+        const churchId = selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
+        const stats: any = await apiClient.getAttendanceStats(token, { churchId })
+        const statsList = stats.data || []
+
         // Process stats for charts
-        // Group by week or date
-        const processed = (stats.data || []).map((s: any) => ({
+        const processed = statsList.map((s: any) => ({
           week: new Date(s.date).toLocaleDateString(),
           [s.language]: parseInt(s.present_count)
         }))
@@ -40,19 +45,38 @@ export function AttendanceManagement() {
           }
           return acc
         }, [])
-        setAttendanceData(merged)
+        setAttendanceData(merged.slice(-10)) // Show last 10 sessions
 
-        // Mock today's attendance for now as backend might not have "today" specific endpoint easily accessible without params
-        // Or use getAttendanceRecords with today's date
-        const today = new Date().toISOString().split('T')[0]
-        const todayRecords: any = await apiClient.getAttendance(token, { startDate: today, endDate: today })
-        // Process todayRecords...
-        // For now, keep mock or simple logic
-        setTodayAttendance([
-          { service: "English Service", time: "12:30 PM", present: 0, expected: 0, percentage: 0 },
-          { service: "Tamil Service", time: "3:00 PM", present: 0, expected: 0, percentage: 0 },
-          { service: "Malayalam Service", time: "3:00 PM", present: 0, expected: 0, percentage: 0 },
-        ])
+        // Derive latest attendance for cards
+        // Get the latest date from stats
+        const latestDate = statsList.length > 0
+          ? new Date(Math.max(...statsList.map((s: any) => new Date(s.date).getTime()))).toISOString().split('T')[0]
+          : null
+
+        const latestStats = statsList.filter((s: any) => s.date.startsWith(latestDate))
+
+        const services = [
+          { name: "English Service", language: "English", time: "12:30 PM" },
+          { name: "Tamil Service", language: "Tamil", time: "3:00 PM" },
+          { name: "Malayalam Service", language: "Malayalam", time: "3:00 PM" },
+        ]
+
+        const sessionCards = services.map(srv => {
+          const stat = latestStats.find((s: any) => s.language === srv.language)
+          const present = stat ? parseInt(stat.present_count) : 0
+          const expected = stat ? parseInt(stat.expected_count) : 0
+          const percentage = expected > 0 ? Math.round((present / expected) * 100) : 0
+
+          return {
+            service: srv.name,
+            time: srv.time,
+            present,
+            expected,
+            percentage
+          }
+        })
+
+        setTodayAttendance(sessionCards)
 
       } catch (e) {
         console.error(e)
@@ -61,7 +85,7 @@ export function AttendanceManagement() {
       }
     }
     loadData()
-  }, [])
+  }, [selectedChurch])
 
   const absentees = [
     {
