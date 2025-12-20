@@ -13,7 +13,10 @@ import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect } from "react"
 
+import { useChurch } from "@/components/providers/church-context"
+
 export function EventsManagement() {
+  const { selectedChurch } = useChurch()
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -24,8 +27,8 @@ export function EventsManagement() {
     endDate: "",
     time: "",
     location: "",
-    category: "",
-    maxAttendees: "",
+    category: "Service",
+    maxAttendees: "100",
     organizer: ""
   })
 
@@ -34,8 +37,18 @@ export function EventsManagement() {
     try {
       const token = getToken()
       if (!token) return
+
+      const params = selectedChurch?.id && selectedChurch.id !== 'all'
+        ? { churchId: selectedChurch.id }
+        : {}
+
       const data: any = await apiClient.getEvents(token)
-      setEvents(data.data || [])
+      // Filter by church on frontend if needed, though backend should handle it if passed params
+      let filtered = data.data || []
+      if (selectedChurch?.id && selectedChurch.id !== 'all') {
+        filtered = filtered.filter((e: any) => e.church_id === selectedChurch.id)
+      }
+      setEvents(filtered)
     } catch (e) {
       console.error(e)
     } finally {
@@ -45,17 +58,33 @@ export function EventsManagement() {
 
   useEffect(() => {
     fetchEvents()
-  }, [])
+  }, [selectedChurch])
 
   const handleCreateEvent = async () => {
     try {
       const token = getToken()
       if (!token) return
-      await apiClient.createEvent({
+
+      const payload = {
         ...formData,
-        maxAttendees: parseInt(formData.maxAttendees) || 0
-      }, token)
+        maxAttendees: parseInt(formData.maxAttendees) || 0,
+        church_id: selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
+      }
+
+      console.log("[EventsManagement] creating event with payload:", payload)
+      await apiClient.createEvent(payload, token)
       setCreateDialogOpen(false)
+      setFormData({
+        title: "",
+        description: "",
+        date: "",
+        endDate: "",
+        time: "",
+        location: "",
+        category: "Service",
+        maxAttendees: "100",
+        organizer: ""
+      })
       fetchEvents()
     } catch (e) {
       console.error(e)
