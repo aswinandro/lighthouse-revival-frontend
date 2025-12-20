@@ -62,6 +62,10 @@ class ApiClient {
     return this.request("/members", { token })
   }
 
+  async getMembersByChurch(churchId: string, token: string) {
+    return this.request(`/members/church/${churchId}`, { token })
+  }
+
   async getMember(id: string, token: string) {
     return this.request(`/members/${id}`, { token })
   }
@@ -137,8 +141,13 @@ class ApiClient {
   }
 
   // Prayer Requests endpoints
-  async getPrayerRequests(token: string) {
-    return this.request("/prayer-requests", { token })
+  async getPrayerRequests(token: string, params?: any) {
+    let url = "/prayer-requests"
+    if (params) {
+      const queryString = new URLSearchParams(params).toString()
+      url += `?${queryString}`
+    }
+    return this.request(url, { token })
   }
 
   async createPrayerRequest(data: any, token: string) {

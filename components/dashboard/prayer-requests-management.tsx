@@ -13,17 +13,26 @@ import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect } from "react"
 
+import { useChurch } from "@/components/providers/church-context"
+
 export function PrayerRequestsManagement() {
+  const { selectedChurch } = useChurch()
   const [prayerRequests, setPrayerRequests] = useState<any[]>([])
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [members, setMembers] = useState<any[]>([])
 
   const fetchRequests = async () => {
     setLoading(true)
     try {
       const token = getToken()
       if (!token) return
-      const data: any = await apiClient.getPrayerRequests(token)
+
+      const params = selectedChurch?.id && selectedChurch.id !== 'all'
+        ? { churchId: selectedChurch.id }
+        : {}
+
+      const data: any = await apiClient.getPrayerRequests(token, params)
       setPrayerRequests(data.data || [])
     } catch (e) {
       console.error(e)
@@ -32,9 +41,21 @@ export function PrayerRequestsManagement() {
     }
   }
 
+  const fetchMembers = async () => {
+    try {
+      const token = getToken()
+      if (!token || !selectedChurch?.id || selectedChurch.id === 'all') return
+      const data: any = await apiClient.getMembersByChurch(selectedChurch.id, token)
+      setMembers(data.data || [])
+    } catch (e) {
+      console.error("Failed to fetch members:", e)
+    }
+  }
+
   useEffect(() => {
     fetchRequests()
-  }, [])
+    fetchMembers()
+  }, [selectedChurch])
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
@@ -279,10 +300,12 @@ export function PrayerRequestsManagement() {
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="Pastor Michael">Pastor Michael</SelectItem>
-                                      <SelectItem value="Elder Mary">Elder Mary</SelectItem>
-                                      <SelectItem value="Elder John">Elder John</SelectItem>
                                       <SelectItem value="Unassigned">Unassigned</SelectItem>
+                                      {members.map(member => (
+                                        <SelectItem key={member.id} value={member.id}>
+                                          {member.name}
+                                        </SelectItem>
+                                      ))}
                                     </SelectContent>
                                   </Select>
                                 </div>
