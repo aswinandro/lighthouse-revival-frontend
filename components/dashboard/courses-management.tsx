@@ -14,7 +14,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 
+import { useChurch } from "@/components/providers/church-context"
+
 export function CoursesManagement() {
+  const { selectedChurch } = useChurch()
   const [courses, setCourses] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -24,7 +27,7 @@ export function CoursesManagement() {
     duration: "",
     instructor: "",
     startDate: "",
-    status: "Planning"
+    status: "Upcoming"
   })
 
   const fetchCourses = async () => {
@@ -33,7 +36,12 @@ export function CoursesManagement() {
       const token = getToken()
       if (!token) return
       const data: any = await apiClient.getCourses(token)
-      setCourses(data.data || [])
+
+      let filtered = data.data || []
+      if (selectedChurch?.id && selectedChurch.id !== 'all') {
+        filtered = filtered.filter((c: any) => c.church_id === selectedChurch.id)
+      }
+      setCourses(filtered)
     } catch (e) {
       console.error(e)
     } finally {
@@ -43,14 +51,29 @@ export function CoursesManagement() {
 
   useEffect(() => {
     fetchCourses()
-  }, [])
+  }, [selectedChurch])
 
   const handleCreateCourse = async () => {
     try {
       const token = getToken()
       if (!token) return
-      await apiClient.createCourse(formData, token)
+
+      const payload = {
+        ...formData,
+        church_id: selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
+      }
+
+      console.log("[CoursesManagement] creating course with payload:", payload)
+      await apiClient.createCourse(payload, token)
       setCreateDialogOpen(false)
+      setFormData({
+        title: "",
+        description: "",
+        duration: "",
+        instructor: "",
+        startDate: "",
+        status: "Upcoming"
+      })
       fetchCourses()
     } catch (e) {
       console.error(e)
@@ -74,6 +97,7 @@ export function CoursesManagement() {
     switch (status) {
       case "Active":
         return "bg-green-100 text-green-800"
+      case "Upcoming":
       case "Planning":
         return "bg-yellow-100 text-yellow-800"
       case "Completed":
