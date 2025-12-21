@@ -32,6 +32,12 @@ export function ChurchProvider({ children }: { children: React.ReactNode }) {
   const lastPathname = useRef<string | null>(null)
 
   const loadChurches = useCallback(async (isSilent = false) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null
+    if (!token) {
+      setIsLoading(false)
+      return
+    }
+
     if (!isSilent) setIsLoading(true)
     try {
       // Check user's global role from localStorage

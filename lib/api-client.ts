@@ -6,6 +6,14 @@ interface RequestOptions extends RequestInit {
   token?: string
 }
 
+export interface AuthResponse {
+  status: string;
+  data: {
+    user: any;
+    token: string;
+  };
+}
+
 class ApiClient {
   private baseUrl: string
 
@@ -34,9 +42,12 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({
-        message: "An error occurred",
+        message: `HTTP error! status: ${response.status}`,
       }))
-      throw new Error(error.message || `HTTP error! status: ${response.status}`)
+      const msg = (error && typeof error === 'object' && error.message)
+        ? error.message
+        : `HTTP error! status: ${response.status}`;
+      throw new Error(msg)
     }
 
     return response.json()
@@ -44,7 +55,7 @@ class ApiClient {
 
   // Auth endpoints
   async login(email: string, password: string) {
-    return this.request("/auth/login", {
+    return this.request<AuthResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     })
@@ -61,7 +72,7 @@ class ApiClient {
     country?: string;
     churchId?: string;
   }) {
-    return this.request("/auth/register", {
+    return this.request<AuthResponse>("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     })
