@@ -17,8 +17,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { useChurch } from "@/components/providers/church-context"
 
 export function CoursesManagement() {
-  const { selectedChurch } = useChurch()
+  const { selectedChurch, userRole } = useChurch()
   const [courses, setCourses] = useState<any[]>([])
+  const [memberCourses, setMemberCourses] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
@@ -31,6 +32,21 @@ export function CoursesManagement() {
   })
 
   const fetchCourses = async () => {
+    if (userRole === "church_believer" || userRole === "user") {
+      setLoading(true)
+      try {
+        const token = getToken()
+        if (!token) return
+        const res: any = await apiClient.getMyEnrollments(token)
+        setMemberCourses(res.data || [])
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
     setLoading(true)
     try {
       const token = getToken()
@@ -51,7 +67,65 @@ export function CoursesManagement() {
 
   useEffect(() => {
     fetchCourses()
-  }, [selectedChurch])
+  }, [selectedChurch, userRole])
+
+  if (userRole === "church_believer" || userRole === "user") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">My Courses</h2>
+          <p className="text-muted-foreground">Manage your enrolled courses and track your progress</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {memberCourses.length === 0 ? (
+            <Card className="md:col-span-2">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <BookOpen className="w-12 h-12 text-muted-foreground mb-4" />
+                <p className="text-lg font-medium">No courses enrolled yet</p>
+                <p className="text-muted-foreground">Check back later or contact your pastor for enrollment.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            memberCourses.map((ce) => (
+              <Card key={ce.id} className="border-l-4 border-l-primary">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{ce.course_name}</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">{ce.description}</p>
+                    </div>
+                    <Badge variant={ce.status === "Active" ? "default" : "secondary"}>
+                      {ce.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Duration:</span>
+                      <p className="font-medium">{ce.duration}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Instructor:</span>
+                      <p className="font-medium">{ce.instructor_name || "N/A"}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Attendance Progress</span>
+                      <span className="font-medium">{Math.round(parseFloat(ce.attendance_percentage || "0"))}%</span>
+                    </div>
+                    <Progress value={parseFloat(ce.attendance_percentage || "0")} />
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
+    )
+  }
 
   const handleCreateCourse = async () => {
     try {

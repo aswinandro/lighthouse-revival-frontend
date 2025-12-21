@@ -543,6 +543,22 @@ class ApiClient {
     return this.request(`/qr-attendance/members/${memberId}/history${queryString}`, { token })
   }
 
+  async getMyEnrollments(token: string) {
+    return this.request("/courses/my-enrollments", { token })
+  }
+
+  async getMemberAttendance(token: string, memberId: string) {
+    return this.request(`/attendance?memberId=${memberId}`, { token })
+  }
+
+  async getMyMemberProfile(token: string) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}")
+    if (!user.email) return { data: null }
+
+    const result: any = await this.request(`/members?search=${user.email}`, { token })
+    return { data: result.data?.[0] || null }
+  }
+
   // Users endpoints
   async getUsers(token: string, params?: { role?: string; churchId?: string }) {
     const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ""

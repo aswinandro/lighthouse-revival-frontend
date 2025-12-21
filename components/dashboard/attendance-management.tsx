@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
 import { Users, TrendingUp, Calendar, QrCode, Download, AlertTriangle } from "lucide-react"
@@ -14,12 +15,35 @@ import { useEffect, useState } from "react"
 import { useChurch } from "@/components/providers/church-context"
 
 export function AttendanceManagement() {
-  const { selectedChurch } = useChurch()
+  const { selectedChurch, userRole } = useChurch()
   const [attendanceData, setAttendanceData] = useState<any[]>([])
   const [todayAttendance, setTodayAttendance] = useState<any[]>([])
+  const [memberAttendance, setMemberAttendance] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    async function loadMemberData() {
+      if (userRole !== "church_believer" && userRole !== "user") return
+      setLoading(true)
+      try {
+        const token = getToken()
+        if (!token) return
+        const profile = await apiClient.getMyMemberProfile(token)
+        if (profile.data) {
+          const res = await apiClient.getMemberAttendance(token, profile.data.id)
+          setMemberAttendance(res.data || [])
+        }
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadMemberData()
+  }, [userRole])
+
+  useEffect(() => {
+    if (userRole === "church_believer" || userRole === "user") return
     async function loadData() {
       setLoading(true)
       try {
@@ -98,6 +122,64 @@ export function AttendanceManagement() {
     },
     // ... keep mock absentees for now as backend logic for "absentees" is complex
   ]
+
+  if (userRole === "church_believer" || userRole === "user") {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold">My Attendance</h2>
+          <p className="text-muted-foreground">Your history of service and event participation</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {memberAttendance.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">No attendance records found.</p>
+                ) : (
+                  memberAttendance.slice(0, 5).map((record) => (
+                    <div key={record.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${record.present ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}>
+                          <Calendar className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{record.service_type}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(record.service_date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <Badge variant={record.present ? "default" : "destructive"}>
+                        {record.present ? "Present" : "Absent"}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Attendance Stats</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center h-48">
+              <div className="text-4xl font-bold text-primary">
+                {memberAttendance.filter(a => a.present).length} / {memberAttendance.length}
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">Sessions attended</p>
+              <div className="w-full max-w-xs mt-4">
+                <Progress value={memberAttendance.length > 0 ? (memberAttendance.filter(a => a.present).length / memberAttendance.length) * 100 : 0} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
