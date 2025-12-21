@@ -35,12 +35,21 @@ export interface Member {
 }
 
 export default function MembersManagement() {
-  const { selectedChurch } = useChurch();
+  const { selectedChurch, isLoading: isChurchLoading } = useChurch();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
+
+  if (isChurchLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-20 bg-muted rounded-lg" />
+        <div className="h-64 bg-muted rounded-lg" />
+      </div>
+    )
+  }
   const [error, setError] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);

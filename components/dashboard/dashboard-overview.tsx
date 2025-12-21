@@ -14,8 +14,20 @@ import { MemberOverview } from "./member-overview"
 
 
 export function DashboardOverview() {
-  const { userRole, selectedChurch } = useChurch()
+  const { userRole, selectedChurch, isLoading: isChurchLoading } = useChurch()
   const { isRTL } = useLanguage()
+
+  if (isChurchLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-32 bg-muted rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="h-64 bg-muted rounded-lg" />
+          <div className="h-64 bg-muted rounded-lg" />
+        </div>
+      </div>
+    )
+  }
 
   if (userRole === "member" || userRole === "user") {
     return <MemberOverview />

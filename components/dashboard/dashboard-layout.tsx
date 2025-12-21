@@ -39,7 +39,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ first_name?: string; last_name?: string; email?: string } | null>(null);
   const { isRTL } = useLanguage();
-  const { userRole } = useChurch();
+  const { userRole, isLoading: isChurchLoading } = useChurch();
   const router = useRouter();
 
   useEffect(() => {
@@ -127,31 +127,39 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-              {filteredNavItems.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <Button
-                    key={item.id}
-                    variant={activeTab === item.id ? "default" : "ghost"}
-                    className={cn(
-                      "w-full justify-start gap-3 h-11",
-                      activeTab === item.id && "bg-primary text-primary-foreground",
-                      isRTL && "flex-row-reverse",
-                    )}
-                    onClick={() => {
-                      if (onTabChange) {
-                        onTabChange(item.id);
-                        setSidebarOpen(false);
-                      }
-                    }}
-                    disabled={false}
-                  >
-                    <IconComponent className="w-5 h-5" />
-                    {item.label}
-                  </Button>
-                );
-              })}
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto font-medium">
+              {isChurchLoading ? (
+                <div className="space-y-3 pt-2">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="h-11 w-full bg-muted/50 rounded-md animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                filteredNavItems.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <Button
+                      key={item.id}
+                      variant={activeTab === item.id ? "default" : "ghost"}
+                      className={cn(
+                        "w-full justify-start gap-3 h-11",
+                        activeTab === item.id && "bg-primary text-primary-foreground",
+                        isRTL && "flex-row-reverse",
+                      )}
+                      onClick={() => {
+                        if (onTabChange) {
+                          onTabChange(item.id);
+                          setSidebarOpen(false);
+                        }
+                      }}
+                      disabled={false}
+                    >
+                      <IconComponent className="w-5 h-5" />
+                      {item.label}
+                    </Button>
+                  );
+                })
+              )}
             </nav>
 
             {/* User Section */}
