@@ -67,6 +67,10 @@ class ApiClient {
     })
   }
 
+  async getCurrentUser(token: string) {
+    return this.request("/auth/me", { token })
+  }
+
   // Members endpoints
   async getMembers(token: string) {
     return this.request("/members", { token })

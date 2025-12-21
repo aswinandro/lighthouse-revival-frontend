@@ -48,7 +48,11 @@ export default function LoginPage() {
         return;
       }
       localStorage.setItem("token", token);
-      console.log("Login: Token stored in localStorage", token);
+      const user = data.user || (data.data && data.data.user);
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+      console.log("Login: Token and User stored in localStorage");
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");

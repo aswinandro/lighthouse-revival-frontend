@@ -1,13 +1,14 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { LanguageSelector } from "@/components/ui/language-selector"
 import { ChurchSelector } from "@/components/ui/church-selector"
 import { useLanguage } from "@/components/providers/language-provider"
 import { useChurch } from "@/components/providers/church-context"
+import { apiClient } from "@/lib/api-client"
 import {
   LayoutDashboard,
   Users,
@@ -36,14 +37,36 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, activeTab, onTabChange }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<{ first_name?: string; last_name?: string; email?: string } | null>(null);
   const { isRTL } = useLanguage();
   const { userRole } = useChurch();
   const router = useRouter();
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse stored user", e);
+      }
+    } else {
+      // Fallback: try to fetch from API if token exists
+      const token = localStorage.getItem("token");
+      if (token) {
+        apiClient.getCurrentUser(token).then((res: any) => {
+          const userData = res.data || res;
+          setUser(userData);
+          localStorage.setItem("user", JSON.stringify(userData));
+        }).catch(err => console.error("Failed to fetch user", err));
+      }
+    }
+  }, []);
+
   const handleSignOut = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user"); // Clear user data too if any
-    router.push("/login");
+    localStorage.clear(); // Clear all including token and user
+    sessionStorage.clear();
+    window.location.href = "/login"; // Full reload to clear memory state
   };
 
   const navigationItems = [
@@ -138,8 +161,8 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
                   <Users className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">Admin User</p>
-                  <p className="text-sm text-muted-foreground">admin@church.com</p>
+                  <p className="font-medium">{user ? `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email : "Loading..."}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email || ""}</p>
                 </div>
               </div>
               <div className="space-y-2">
