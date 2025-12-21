@@ -8,7 +8,7 @@ export interface Church {
   name: string
   city: string
   country: string
-  role: "super_admin" | "church_pastor" | "church_leader" | "church_believer"
+  role: "super_admin" | "church_pastor" | "church_leader" | "member"
 }
 
 interface ChurchContextType {
@@ -24,7 +24,7 @@ const ChurchContext = createContext<ChurchContextType | undefined>(undefined)
 export function ChurchProvider({ children }: { children: React.ReactNode }) {
   const [selectedChurch, setSelectedChurch] = useState<Church | null>(null)
   const [churches, setChurches] = useState<Church[]>([])
-  const [userRole, setUserRole] = useState<string>("church_believer")
+  const [userRole, setUserRole] = useState<string>("member")
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -47,7 +47,15 @@ export function ChurchProvider({ children }: { children: React.ReactNode }) {
 
         const fetchedChurches = await import("@/lib/services/church-service").then(m => m.fetchChurches())
         setChurches(fetchedChurches)
-        const selected = await import("@/lib/services/church-service").then(m => m.fetchSelectedChurch(fetchedChurches))
+
+        const savedChurchId = typeof window !== "undefined" ? localStorage.getItem("selectedChurchId") : null
+        let selected: Church | null = null
+
+        if (savedChurchId === "all" && globalRole === "super_admin") {
+          selected = { id: "all", name: "All Churches", city: "Global", country: "Global", role: "super_admin" }
+        } else {
+          selected = await import("@/lib/services/church-service").then(m => m.fetchSelectedChurch(fetchedChurches))
+        }
 
         if (selected) {
           setSelectedChurch(selected)

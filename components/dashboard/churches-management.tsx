@@ -514,7 +514,7 @@ export function ChurchesManagement() {
                     <SelectContent>
                       <SelectItem value="church_pastor">Church Pastor</SelectItem>
                       <SelectItem value="church_leader">Church Leader</SelectItem>
-                      <SelectItem value="church_believer">Church Believer</SelectItem>
+                      <SelectItem value="member">Member</SelectItem>
                       <SelectItem value="super_admin">Super Admin</SelectItem>
                     </SelectContent>
                   </Select>
@@ -657,7 +657,7 @@ export function ChurchesManagement() {
                 <SelectContent>
                   <SelectItem value="church_pastor">Church Pastor</SelectItem>
                   <SelectItem value="church_leader">Church Leader</SelectItem>
-                  <SelectItem value="church_believer">Church Believer</SelectItem>
+                  <SelectItem value="member">Member</SelectItem>
                   <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>

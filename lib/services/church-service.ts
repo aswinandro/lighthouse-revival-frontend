@@ -18,7 +18,7 @@ export async function fetchChurches(): Promise<Church[]> {
       name: c.name,
       city: c.city,
       country: c.country,
-      role: c.user_role || c.role || "church_believer", // use user_role from backend
+      role: c.user_role || c.role || "member", // use user_role from backend
     }))
   } catch (e) {
     return []

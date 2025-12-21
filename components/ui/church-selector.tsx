@@ -34,6 +34,22 @@ export function ChurchSelector() {
           <CommandList>
             <CommandEmpty>No church found.</CommandEmpty>
             <CommandGroup>
+              {typeof window !== 'undefined' && JSON.parse(localStorage.getItem("user") || "{}").role === "super_admin" && (
+                <CommandItem
+                  onSelect={() => {
+                    setSelectedChurch({ id: "all", name: "All Churches", city: "Global", country: "Global", role: "super_admin" })
+                    setOpen(false)
+                  }}
+                >
+                  <Check
+                    className={cn("mr-2 h-4 w-4", selectedChurch?.id === "all" ? "opacity-100" : "opacity-0")}
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-medium text-primary">All Churches</span>
+                    <span className="text-xs text-muted-foreground">Global Overview</span>
+                  </div>
+                </CommandItem>
+              )}
               {churches.map((church, idx) => (
                 <CommandItem
                   key={church.id + '-' + idx}
@@ -47,8 +63,8 @@ export function ChurchSelector() {
                     className={cn("mr-2 h-4 w-4", selectedChurch?.id === church.id ? "opacity-100" : "opacity-0")}
                   />
                   <div className="flex flex-col">
-                    <span className="font-medium">{church.name}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="font-medium text-white">{church.name}</span>
+                    <span className="text-xs text-muted-foreground text-opacity-70">
                       {church.city}, {church.country}
                     </span>
                   </div>

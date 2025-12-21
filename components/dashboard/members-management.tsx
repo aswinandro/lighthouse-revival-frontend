@@ -63,16 +63,14 @@ export default function MembersManagement() {
     setLoading(true);
     setError("");
     try {
-      const churchId = selectedChurch?.id;
+      const churchId = selectedChurch?.id === 'all' ? undefined : selectedChurch?.id;
       const token = getToken();
       if (!token) throw new Error("No token found");
 
-      const data: any = await apiClient.getMembers(token);
+      const data: any = await apiClient.getMembers(token, { churchId });
       let membersRaw: any[] = Array.isArray(data) ? data : (data.members ?? data.data ?? []);
-      // If a church is selected, filter by church; otherwise, show all (super admin)
-      if (churchId && churchId !== "" && churchId !== "all") {
-        membersRaw = membersRaw.filter((m) => String(m.church_id) === String(churchId));
-      }
+      // Local filtering for other criteria can remain here if needed, 
+      // but server-side church filtering is now handled.
       // Map backend fields to frontend Member type
       let membersArray: Member[] = membersRaw.map((m) => ({
         id: String(m.id),

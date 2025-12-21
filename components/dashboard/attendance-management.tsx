@@ -23,14 +23,14 @@ export function AttendanceManagement() {
 
   useEffect(() => {
     async function loadMemberData() {
-      if (userRole !== "church_believer" && userRole !== "user") return
+      if (userRole !== "member" && userRole !== "user") return
       setLoading(true)
       try {
         const token = getToken()
         if (!token) return
-        const profile = await apiClient.getMyMemberProfile(token)
+        const profile: any = await apiClient.getMyMemberProfile(token)
         if (profile.data) {
-          const res = await apiClient.getMemberAttendance(token, profile.data.id)
+          const res: any = await apiClient.getMemberAttendance(token, profile.data.id)
           setMemberAttendance(res.data || [])
         }
       } catch (e) {
@@ -43,7 +43,7 @@ export function AttendanceManagement() {
   }, [userRole])
 
   useEffect(() => {
-    if (userRole === "church_believer" || userRole === "user") return
+    if (userRole === "member" || userRole === "user") return
     async function loadData() {
       setLoading(true)
       try {
@@ -123,7 +123,7 @@ export function AttendanceManagement() {
     // ... keep mock absentees for now as backend logic for "absentees" is complex
   ]
 
-  if (userRole === "church_believer" || userRole === "user") {
+  if (userRole === "member" || userRole === "user") {
     return (
       <div className="space-y-6">
         <div>

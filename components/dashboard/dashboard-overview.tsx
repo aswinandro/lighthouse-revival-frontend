@@ -14,10 +14,10 @@ import { MemberOverview } from "./member-overview"
 
 
 export function DashboardOverview() {
-  const { userRole } = useChurch()
+  const { userRole, selectedChurch } = useChurch()
   const { isRTL } = useLanguage()
 
-  if (userRole === "church_believer" || userRole === "user") {
+  if (userRole === "member" || userRole === "user") {
     return <MemberOverview />
   }
 
@@ -28,9 +28,10 @@ export function DashboardOverview() {
 
   useEffect(() => {
     setLoading(true)
+    const churchId = selectedChurch?.id === "all" ? undefined : selectedChurch?.id
     Promise.all([
-      fetchDashboardOverview(),
-      fetchAttendanceTrends(),
+      fetchDashboardOverview(churchId),
+      fetchAttendanceTrends(churchId),
     ])
       .then(([overview, attendanceTrends]: [any, any]) => {
         console.log("Dashboard API overview response:", overview);
@@ -84,7 +85,7 @@ export function DashboardOverview() {
         setError(e.message || "Failed to load dashboard data")
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedChurch?.id])
 
   const recentActivities = [
     {

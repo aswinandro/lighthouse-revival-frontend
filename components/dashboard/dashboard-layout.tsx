@@ -70,13 +70,13 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   };
 
   const navigationItems = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard, roles: ["super_admin", "church_pastor", "church_leader", "church_believer", "user"] },
+    { id: "overview", label: "Overview", icon: LayoutDashboard, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
     { id: "members", label: "Members", icon: Users, roles: ["super_admin", "church_pastor", "church_leader"] },
     { id: "newcomers", label: "Newcomers", icon: UserPlus, roles: ["super_admin", "church_pastor", "church_leader"] },
-    { id: "attendance", label: "Attendance", icon: BarChart3, roles: ["super_admin", "church_pastor", "church_leader", "church_believer", "user"] },
-    { id: "courses", label: "Courses", icon: BookOpen, roles: ["super_admin", "church_pastor", "church_leader", "church_believer", "user"] },
-    { id: "events", label: "Events", icon: Calendar, roles: ["super_admin", "church_pastor", "church_leader", "church_believer", "user"] },
-    { id: "prayers", label: "Prayer Requests", icon: MessageSquare, roles: ["super_admin", "church_pastor", "church_leader", "church_believer", "user"] },
+    { id: "attendance", label: "Attendance", icon: BarChart3, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
+    { id: "courses", label: "Courses", icon: BookOpen, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
+    { id: "events", label: "Events", icon: Calendar, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
+    { id: "prayers", label: "Prayer Requests", icon: MessageSquare, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
     { id: "ministries", label: "Ministries", icon: Church, roles: ["super_admin", "church_pastor", "church_leader"] },
     { id: "churches", label: "Churches", icon: Building2, roles: ["super_admin"] },
     { id: "schedules", label: "Preaching Schedules", icon: Calendar, roles: ["super_admin", "church_pastor"] },

@@ -32,7 +32,7 @@ export function CoursesManagement() {
   })
 
   const fetchCourses = async () => {
-    if (userRole === "church_believer" || userRole === "user") {
+    if (userRole === "member" || userRole === "user") {
       setLoading(true)
       try {
         const token = getToken()
@@ -69,7 +69,7 @@ export function CoursesManagement() {
     fetchCourses()
   }, [selectedChurch, userRole])
 
-  if (userRole === "church_believer" || userRole === "user") {
+  if (userRole === "member" || userRole === "user") {
     return (
       <div className="space-y-6">
         <div>

@@ -16,7 +16,7 @@ import { useEffect, useState } from "react"
 import { WeeklyReportForm } from "./weekly-report-form"
 
 export function WeeklyReportsManagement() {
-  const { userRole } = useChurch()
+  const { userRole, selectedChurch } = useChurch()
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -26,7 +26,8 @@ export function WeeklyReportsManagement() {
     try {
       const token = getToken()
       if (!token) return
-      const data: any = await apiClient.getWeeklyReports(token)
+      const churchId = selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
+      const data: any = await apiClient.getWeeklyReports(token, { churchId })
       setReports(data.data || [])
     } catch (e) {
       console.error(e)
@@ -37,7 +38,7 @@ export function WeeklyReportsManagement() {
 
   useEffect(() => {
     fetchReports()
-  }, [])
+  }, [selectedChurch])
 
   return (
     <div className="space-y-6">

@@ -72,8 +72,9 @@ class ApiClient {
   }
 
   // Members endpoints
-  async getMembers(token: string) {
-    return this.request("/members", { token })
+  async getMembers(token: string, params?: { churchId?: string; status?: string; language?: string; search?: string }) {
+    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ""
+    return this.request(`/members${queryString}`, { token })
   }
 
   async getMembersByChurch(churchId: string, token: string) {
@@ -295,20 +296,24 @@ class ApiClient {
   }
 
   // Dashboard endpoints
-  async getDashboardOverview(token: string) {
-    return this.request("/dashboard/overview", { token })
+  async getDashboardOverview(token: string, churchId?: string) {
+    const url = churchId ? `/dashboard/overview?churchId=${churchId}` : "/dashboard/overview"
+    return this.request(url, { token })
   }
 
-  async getAttendanceTrends(token: string) {
-    return this.request("/dashboard/attendance-trends", { token })
+  async getAttendanceTrends(token: string, churchId?: string) {
+    const url = churchId ? `/dashboard/attendance-trends?churchId=${churchId}` : "/dashboard/attendance-trends"
+    return this.request(url, { token })
   }
 
-  async getLanguageDistribution(token: string) {
-    return this.request("/dashboard/language-distribution", { token })
+  async getLanguageDistribution(token: string, churchId?: string) {
+    const url = churchId ? `/dashboard/language-distribution?churchId=${churchId}` : "/dashboard/language-distribution"
+    return this.request(url, { token })
   }
 
-  async getRecentActivity(token: string) {
-    return this.request("/dashboard/recent-activity", { token })
+  async getRecentActivity(token: string, churchId?: string) {
+    const url = churchId ? `/dashboard/recent-activity?churchId=${churchId}` : "/dashboard/recent-activity"
+    return this.request(url, { token })
   }
 
   // Churches endpoints
