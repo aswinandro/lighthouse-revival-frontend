@@ -17,28 +17,14 @@ export function DashboardOverview() {
   const { userRole, selectedChurch, isLoading: isChurchLoading } = useChurch()
   const { isRTL } = useLanguage()
 
-  if (isChurchLoading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-32 bg-muted rounded-lg" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-64 bg-muted rounded-lg" />
-          <div className="h-64 bg-muted rounded-lg" />
-        </div>
-      </div>
-    )
-  }
-
-  if (userRole === "member" || userRole === "user") {
-    return <MemberOverview />
-  }
-
   const [stats, setStats] = useState<any[] | null>(null)
   const [trends, setTrends] = useState<any[] | null>(null)
   const [error, setError] = useState<string>("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (isChurchLoading || userRole === "member" || userRole === "user") return
+
     setLoading(true)
     const churchId = selectedChurch?.id === "all" ? undefined : selectedChurch?.id
     Promise.all([
@@ -97,7 +83,23 @@ export function DashboardOverview() {
         setError(e.message || "Failed to load dashboard data")
       })
       .finally(() => setLoading(false))
-  }, [selectedChurch?.id])
+  }, [selectedChurch?.id, isChurchLoading, userRole])
+
+  if (isChurchLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-32 bg-muted rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="h-64 bg-muted rounded-lg" />
+          <div className="h-64 bg-muted rounded-lg" />
+        </div>
+      </div>
+    )
+  }
+
+  if (userRole === "member" || userRole === "user") {
+    return <MemberOverview />
+  }
 
   const recentActivities = [
     {
