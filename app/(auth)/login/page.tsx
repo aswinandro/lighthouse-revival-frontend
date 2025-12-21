@@ -18,12 +18,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { apiClient } from "@/lib/api-client"
+import { useChurch } from "@/components/providers/church-context"
 
 export default function LoginPage() {
   const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null)
   const { fadeIn } = useGSAP()
   const { t } = useLanguage()
+  const { refresh } = useChurch()
 
   useEffect(() => {
     if (cardRef.current) {
@@ -53,6 +55,7 @@ export default function LoginPage() {
         localStorage.setItem("user", JSON.stringify(user));
       }
       console.log("Login: Token and User stored in localStorage");
+      await refresh();
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
