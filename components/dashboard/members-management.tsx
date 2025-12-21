@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
+import { useChurch } from "@/components/providers/church-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,74 +12,198 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Edit, Trash2, Mail, Phone, MapPin } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
 
-export function MembersManagement() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterRole, setFilterRole] = useState("all")
-  const [filterStatus, setFilterStatus] = useState("all")
+// Define Member type
+// Define Member type
+export interface Member {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  status: string;
+  emirate?: string;
+  country?: string;
+  preferred_service?: string;
+  church_id: string;
+  joined_at?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
 
-  const members = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      phone: "+971-50-123-4567",
-      role: "Active",
-      status: "Active",
-      emirate: "Abu Dhabi",
-      country: "India",
-      joinedAt: "2023-01-15",
-      service: "English",
-    },
-    {
-      id: 2,
-      name: "Sarah Wilson",
-      email: "sarah@example.com",
-      phone: "+971-55-987-6543",
-      role: "Elder",
-      status: "Active",
-      emirate: "Dubai",
-      country: "Philippines",
-      joinedAt: "2022-08-20",
-      service: "Tamil",
-    },
-    {
-      id: 3,
-      name: "Michael Johnson",
-      email: "michael@example.com",
-      phone: "+971-52-456-7890",
-      role: "Pastor",
-      status: "Active",
-      emirate: "Sharjah",
-      country: "Nigeria",
-      joinedAt: "2021-03-10",
-      service: "English",
-    },
-    {
-      id: 4,
-      name: "Priya Sharma",
-      email: "priya@example.com",
-      phone: "+971-56-234-5678",
-      role: "Active",
-      status: "Active",
-      emirate: "Abu Dhabi",
-      country: "India",
-      joinedAt: "2023-06-05",
-      service: "Hindi",
-    },
-    {
-      id: 5,
-      name: "David Thomas",
-      email: "david@example.com",
-      phone: "+971-50-345-6789",
-      role: "Lifetime",
-      status: "Active",
-      emirate: "Abu Dhabi",
-      country: "India",
-      joinedAt: "2020-12-01",
-      service: "Malayalam",
-    },
-  ]
+export default function MembersManagement() {
+  const { selectedChurch } = useChurch();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    gender: "Male",
+    membership_status: "Active",
+    preferred_language: "English",
+    city: "",
+    country: "",
+    notes: ""
+  });
+
+  // Fetch members from backend REST API
+  async function loadMembers() {
+    setLoading(true);
+    setError("");
+    try {
+      const churchId = selectedChurch?.id;
+      const token = getToken();
+      if (!token) throw new Error("No token found");
+
+      const data: any = await apiClient.getMembers(token);
+      let membersRaw: any[] = Array.isArray(data) ? data : (data.members ?? data.data ?? []);
+      // If a church is selected, filter by church; otherwise, show all (super admin)
+      if (churchId && churchId !== "" && churchId !== "all") {
+        membersRaw = membersRaw.filter((m) => String(m.church_id) === String(churchId));
+      }
+      // Map backend fields to frontend Member type
+      let membersArray: Member[] = membersRaw.map((m) => ({
+        id: String(m.id),
+        name: m.first_name && m.last_name ? `${m.first_name} ${m.last_name}` : m.first_name || m.last_name || m.name || "",
+        email: m.email || "",
+        phone: m.phone || "",
+        role: m.membership_status || "",
+        status: m.membership_status || "",
+        emirate: m.city || "",
+        country: m.country || "",
+        preferred_service: m.preferred_language || "",
+        church_id: String(m.church_id || ""),
+        joined_at: m.membership_date ? (typeof m.membership_date === "string" ? m.membership_date.split("T")[0] : m.membership_date) : "",
+        notes: m.notes || "",
+        created_at: m.created_at || "",
+        updated_at: m.updated_at || "",
+      }));
+      setMembers(membersArray);
+    } catch (e) {
+      const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
+      setError(errorMsg || "Failed to load members");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Initial load
+  React.useEffect(() => {
+    loadMembers();
+  }, [selectedChurch]);
+
+  const resetForm = () => {
+    setFormData({
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
+      gender: "Male",
+      membership_status: "Active",
+      preferred_language: "English",
+      city: "",
+      country: "",
+      notes: ""
+    });
+  };
+
+  // Add, update, delete handlers
+  async function handleAddMember() {
+    setLoading(true);
+    setError("");
+    try {
+      const token = getToken();
+      if (!token) throw new Error("No token found");
+
+      const payload = {
+        ...formData,
+        church_id: selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
+      };
+
+      await apiClient.createMember(payload, token);
+      setIsAddDialogOpen(false);
+      resetForm();
+      await loadMembers();
+    } catch (e) {
+      const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
+      setError(errorMsg || "Failed to add member");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteMember(id: Member["id"]) {
+    if (!confirm("Are you sure you want to delete this member?")) return;
+    setLoading(true);
+    setError("");
+    try {
+      const token = getToken();
+      if (!token) throw new Error("No token found");
+      await apiClient.deleteMember(id, token);
+      await loadMembers();
+    } catch (e) {
+      const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
+      setError(errorMsg || "Failed to delete member");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleUpdateMember() {
+    if (!editingMember) return;
+    setLoading(true);
+    setError("");
+    try {
+      const token = getToken();
+      if (!token) throw new Error("No token found");
+      await apiClient.updateMember(editingMember.id, formData, token);
+      setIsEditDialogOpen(false);
+      setEditingMember(null);
+      resetForm();
+      await loadMembers();
+    } catch (e) {
+      const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
+      setError(errorMsg || "Failed to update member");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const openEditDialog = (member: Member) => {
+    // We need to fetch original data or find it in members list
+    // Backend returns first_name, last_name etc. but frontend Member has name
+    // Finding raw member to populate form
+    const rawMember = members.find(m => m.id === member.id);
+    if (rawMember) {
+      const nameParts = rawMember.name.split(' ');
+      setFormData({
+        first_name: nameParts[0] || "",
+        last_name: nameParts.slice(1).join(' ') || "",
+        email: rawMember.email || "",
+        phone: rawMember.phone || "",
+        gender: "Male",
+        membership_status: rawMember.status || "Active",
+        preferred_language: rawMember.preferred_service || "English",
+        city: rawMember.emirate || "",
+        country: rawMember.country || "",
+        notes: rawMember.notes || ""
+      });
+      setEditingMember(member);
+      setIsEditDialogOpen(true);
+    }
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -95,22 +220,21 @@ export function MembersManagement() {
 
   const filteredMembers = members.filter((member) => {
     const matchesSearch =
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesRole = filterRole === "all" || member.role === filterRole
-    const matchesStatus = filterStatus === "all" || member.status === filterStatus
-    return matchesSearch && matchesRole && matchesStatus
-  })
+      member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === "all" || member.role === filterRole;
+    const matchesStatus = filterStatus === "all" || member.status === filterStatus;
+    return matchesSearch && matchesRole && matchesStatus;
+  });
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Members Management</h2>
-          <p className="text-muted-foreground">Manage church members and their information</p>
+          <p className="text-muted-foreground">Manage your church members and their roles</p>
         </div>
-        <Dialog>
+        <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
@@ -121,59 +245,62 @@ export function MembersManagement() {
             <DialogHeader>
               <DialogTitle>Add New Member</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" placeholder="Enter full name" />
+                <Label htmlFor="first_name">First Name</Label>
+                <Input
+                  id="first_name"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  placeholder="John"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last_name">Last Name</Label>
+                <Input
+                  id="last_name"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  placeholder="Doe"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="Enter email" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="john@example.com"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" placeholder="Enter phone number" />
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+971..."
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select>
+                <Label>Gender</Label>
+                <Select value={formData.gender} onValueChange={(val) => setFormData({ ...formData, gender: val })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Elder">Elder</SelectItem>
-                    <SelectItem value="Pastor">Pastor</SelectItem>
-                    <SelectItem value="Lifetime">Lifetime</SelectItem>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="emirate">Emirate</Label>
-                <Select>
+                <Label>Language</Label>
+                <Select value={formData.preferred_language} onValueChange={(val) => setFormData({ ...formData, preferred_language: val })}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select emirate" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Abu Dhabi">Abu Dhabi</SelectItem>
-                    <SelectItem value="Dubai">Dubai</SelectItem>
-                    <SelectItem value="Sharjah">Sharjah</SelectItem>
-                    <SelectItem value="Ajman">Ajman</SelectItem>
-                    <SelectItem value="Fujairah">Fujairah</SelectItem>
-                    <SelectItem value="Ras Al Khaimah">Ras Al Khaimah</SelectItem>
-                    <SelectItem value="Umm Al Quwain">Umm Al Quwain</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="country">Home Country</Label>
-                <Input id="country" placeholder="Enter home country" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="service">Preferred Service</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select service" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="English">English</SelectItem>
@@ -183,18 +310,146 @@ export function MembersManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="md:col-span-2 space-y-2">
+              <div className="space-y-2">
+                <Label>Role / Status</Label>
+                <Select value={formData.membership_status} onValueChange={(val) => setFormData({ ...formData, membership_status: val })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active Member</SelectItem>
+                    <SelectItem value="Elder">Elder</SelectItem>
+                    <SelectItem value="Pastor">Pastor</SelectItem>
+                    <SelectItem value="Lifetime">Lifetime Member</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  placeholder="Dubai"
+                />
+              </div>
+              <div className="col-span-2 space-y-2">
                 <Label htmlFor="notes">Notes</Label>
-                <Textarea id="notes" placeholder="Additional notes about the member" />
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Any additional info..."
+                />
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline">Cancel</Button>
-              <Button>Add Member</Button>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleAddMember} disabled={loading}>
+                {loading ? "Adding..." : "Add Member"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) setEditingMember(null); }}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Member</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_first_name">First Name</Label>
+                <Input
+                  id="edit_first_name"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_last_name">Last Name</Label>
+                <Input
+                  id="edit_last_name"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_email">Email</Label>
+                <Input
+                  id="edit_email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_phone">Phone</Label>
+                <Input
+                  id="edit_phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Language</Label>
+                <Select value={formData.preferred_language} onValueChange={(val) => setFormData({ ...formData, preferred_language: val })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="English">English</SelectItem>
+                    <SelectItem value="Tamil">Tamil</SelectItem>
+                    <SelectItem value="Hindi">Hindi</SelectItem>
+                    <SelectItem value="Malayalam">Malayalam</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Role / Status</Label>
+                <Select value={formData.membership_status} onValueChange={(val) => setFormData({ ...formData, membership_status: val })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active Member</SelectItem>
+                    <SelectItem value="Elder">Elder</SelectItem>
+                    <SelectItem value="Pastor">Pastor</SelectItem>
+                    <SelectItem value="Lifetime">Lifetime Member</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_city">City</Label>
+                <Input
+                  id="edit_city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                />
+              </div>
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="edit_notes">Notes</Label>
+                <Textarea
+                  id="edit_notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleUpdateMember} disabled={loading}>
+                {loading ? "Updating..." : "Update Member"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
+
+      {error && <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">{error}</div>}
 
       {/* Filters */}
       <Card>
@@ -235,7 +490,6 @@ export function MembersManagement() {
           </div>
         </CardContent>
       </Card>
-
       {/* Members Table */}
       <Card>
         <CardHeader>
@@ -286,15 +540,15 @@ export function MembersManagement() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{member.service}</Badge>
+                      <Badge variant="outline">{member.preferred_service}</Badge>
                     </TableCell>
-                    <TableCell className="text-sm">{member.joinedAt}</TableCell>
+                    <TableCell className="text-sm">{member.joined_at}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(member)}>
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive">
+                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteMember(member.id)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -307,5 +561,5 @@ export function MembersManagement() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

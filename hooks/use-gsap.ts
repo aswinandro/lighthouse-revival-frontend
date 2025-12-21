@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
 
 export function useGSAP() {
   const gsapRef = useRef<any>(null)
@@ -20,7 +20,7 @@ export function useGSAP() {
     loadGSAP()
   }, [])
 
-  const fadeIn = (element: string | Element, options = {}) => {
+  const fadeIn = useCallback((element: string | Element, options = {}) => {
     if (gsapRef.current) {
       return gsapRef.current.fromTo(
         element,
@@ -28,9 +28,9 @@ export function useGSAP() {
         { opacity: 1, y: 0, duration: 0.8, ease: "power2.out", ...options },
       )
     }
-  }
+  }, [])
 
-  const slideIn = (element: string | Element, direction = "left", options = {}) => {
+  const slideIn = useCallback((element: string | Element, direction = "left", options = {}) => {
     if (gsapRef.current) {
       const x = direction === "left" ? -50 : 50
       return gsapRef.current.fromTo(
@@ -39,9 +39,9 @@ export function useGSAP() {
         { opacity: 1, x: 0, duration: 0.8, ease: "power2.out", ...options },
       )
     }
-  }
+  }, [])
 
-  const scaleUp = (element: string | Element, options = {}) => {
+  const scaleUp = useCallback((element: string | Element, options = {}) => {
     if (gsapRef.current) {
       return gsapRef.current.fromTo(
         element,
@@ -49,9 +49,9 @@ export function useGSAP() {
         { opacity: 1, scale: 1, duration: 0.8, ease: "back.out(1.7)", ...options },
       )
     }
-  }
+  }, [])
 
-  const staggerAnimation = (elements: string, options = {}) => {
+  const staggerAnimation = useCallback((elements: string, options = {}) => {
     if (gsapRef.current) {
       return gsapRef.current.fromTo(
         elements,
@@ -59,7 +59,7 @@ export function useGSAP() {
         { opacity: 1, y: 0, duration: 0.6, stagger: 0.2, ease: "power2.out", ...options },
       )
     }
-  }
+  }, [])
 
   return {
     gsap: gsapRef.current,

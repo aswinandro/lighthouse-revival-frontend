@@ -7,14 +7,85 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
 import { Users, TrendingUp, Calendar, QrCode, Download, AlertTriangle } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
+import { useEffect, useState } from "react"
+
+import { useChurch } from "@/components/providers/church-context"
 
 export function AttendanceManagement() {
-  const attendanceData = [
-    { week: "Week 1", English: 234, Tamil: 189, Hindi: 156, Malayalam: 203 },
-    { week: "Week 2", English: 245, Tamil: 195, Hindi: 162, Malayalam: 198 },
-    { week: "Week 3", English: 228, Tamil: 178, Hindi: 149, Malayalam: 215 },
-    { week: "Week 4", English: 251, Tamil: 201, Hindi: 168, Malayalam: 207 },
-  ]
+  const { selectedChurch } = useChurch()
+  const [attendanceData, setAttendanceData] = useState<any[]>([])
+  const [todayAttendance, setTodayAttendance] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true)
+      try {
+        const token = getToken()
+        if (!token) return
+
+        const churchId = selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
+        const stats: any = await apiClient.getAttendanceStats(token, { churchId })
+        const statsList = stats.data || []
+
+        // Process stats for charts
+        const processed = statsList.map((s: any) => ({
+          week: new Date(s.date).toLocaleDateString(),
+          [s.language]: parseInt(s.present_count)
+        }))
+        // Merge same dates
+        const merged = processed.reduce((acc: any[], curr: any) => {
+          const existing = acc.find(a => a.week === curr.week)
+          if (existing) {
+            Object.assign(existing, curr)
+          } else {
+            acc.push(curr)
+          }
+          return acc
+        }, [])
+        setAttendanceData(merged.slice(-10)) // Show last 10 sessions
+
+        // Derive latest attendance for cards
+        // Get the latest date from stats
+        const latestDate = statsList.length > 0
+          ? new Date(Math.max(...statsList.map((s: any) => new Date(s.date).getTime()))).toISOString().split('T')[0]
+          : null
+
+        const latestStats = statsList.filter((s: any) => s.date.startsWith(latestDate))
+
+        const services = [
+          { name: "English Service", language: "English", time: "12:30 PM" },
+          { name: "Tamil Service", language: "Tamil", time: "3:00 PM" },
+          { name: "Malayalam Service", language: "Malayalam", time: "3:00 PM" },
+        ]
+
+        const sessionCards = services.map(srv => {
+          const stat = latestStats.find((s: any) => s.language === srv.language)
+          const present = stat ? parseInt(stat.present_count) : 0
+          const expected = stat ? parseInt(stat.expected_count) : 0
+          const percentage = expected > 0 ? Math.round((present / expected) * 100) : 0
+
+          return {
+            service: srv.name,
+            time: srv.time,
+            present,
+            expected,
+            percentage
+          }
+        })
+
+        setTodayAttendance(sessionCards)
+
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [selectedChurch])
 
   const absentees = [
     {
@@ -25,28 +96,7 @@ export function AttendanceManagement() {
       phone: "+971-50-123-4567",
       status: "Contacted",
     },
-    {
-      name: "Sarah Wilson",
-      service: "Tamil",
-      lastAttended: "2024-01-07",
-      weeksAbsent: 3,
-      phone: "+971-55-987-6543",
-      status: "Pending",
-    },
-    {
-      name: "Michael Johnson",
-      service: "English",
-      lastAttended: "2024-01-21",
-      weeksAbsent: 1,
-      phone: "+971-52-456-7890",
-      status: "Pending",
-    },
-  ]
-
-  const todayAttendance = [
-    { service: "English Service", time: "12:30 PM", present: 234, expected: 250, percentage: 93.6 },
-    { service: "Tamil Service", time: "3:00 PM", present: 189, expected: 200, percentage: 94.5 },
-    { service: "Malayalam Service", time: "3:00 PM", present: 203, expected: 210, percentage: 96.7 },
+    // ... keep mock absentees for now as backend logic for "absentees" is complex
   ]
 
   return (

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { LanguageSelector } from "@/components/ui/language-selector"
 import { useLanguage } from "@/components/providers/language-provider"
@@ -10,15 +11,29 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 
 export function Navigation() {
+
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const { t, isRTL } = useLanguage()
+  const pathname = usePathname()
 
+  // Only check login state on mount, and only update if changed
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
     window.addEventListener("scroll", handleScroll)
+    // Only set state if value changes
+    const hasAuth = Boolean(document.cookie.match(/(token|session|auth)/i))
+    setIsLoggedIn((prev) => prev !== hasAuth ? hasAuth : prev)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Hide navigation on dashboard, login, or if logged in
+  const shouldShowNav =
+    !(pathname && (pathname.startsWith("/dashboard") || pathname.startsWith("/login"))) &&
+    !isLoggedIn;
+
+  if (!shouldShowNav) return null;
 
   const navItems = [
     { key: "nav.home", href: "/love-of-jesus" },
@@ -119,7 +134,7 @@ export function Navigation() {
               className="md:hidden bg-background/95 backdrop-blur-xl border-t border-border/50 rounded-b-xl shadow-lg overflow-hidden"
             >
               <div className="px-4 pt-4 pb-6 space-y-2">
-                {navItems.map((item) => (
+                {[...navItems, ...moreItems].map((item) => (
                   <Link
                     key={item.key}
                     href={item.href}
@@ -129,22 +144,6 @@ export function Navigation() {
                     {t(item.key)}
                   </Link>
                 ))}
-                {/* More collapsible section */}
-                <details className="mt-2">
-                  <summary className="cursor-pointer px-3 py-2 rounded-lg text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors">{t("nav.more")}</summary>
-                  <div className="pl-2">
-                    {moreItems.map((item) => (
-                      <Link
-                        key={item.key}
-                        href={item.href}
-                        className="block px-3 py-2 rounded-lg text-base font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {t(item.key)}
-                      </Link>
-                    ))}
-                  </div>
-                </details>
                 <div className="pt-4 border-t border-border/50">
                   <Button asChild className="w-full rounded-lg shadow-md">
                     <Link href="/login">{t("nav.signin")}</Link>

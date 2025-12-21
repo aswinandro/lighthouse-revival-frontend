@@ -9,68 +9,81 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MessageSquare, Eye, Heart, Clock, CheckCircle, Mail, Phone } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { getToken } from "@/lib/utils"
+import { useEffect } from "react"
+
+import { useChurch } from "@/components/providers/church-context"
 
 export function PrayerRequestsManagement() {
+  const { selectedChurch } = useChurch()
+  const [prayerRequests, setPrayerRequests] = useState<any[]>([])
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
+  const [loading, setLoading] = useState(false)
+  const [members, setMembers] = useState<any[]>([])
 
-  const prayerRequests = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      email: "sarah@example.com",
-      phone: "+971-50-123-4567",
-      category: "Health",
-      priority: "High",
-      status: "New",
-      subject: "Healing for my mother",
-      message: "Please pray for my mother who is undergoing surgery next week. We trust in God's healing power.",
-      submittedAt: "2024-01-22 10:30 AM",
-      assignedTo: "Pastor Michael",
-      followUpDate: "2024-01-25",
-    },
-    {
-      id: 2,
-      name: "David Wilson",
-      email: "david@example.com",
-      phone: "+971-55-987-6543",
-      category: "Family",
-      priority: "Medium",
-      status: "In Progress",
-      subject: "Marriage restoration",
-      message: "Requesting prayers for reconciliation with my spouse. We are going through difficult times.",
-      submittedAt: "2024-01-20 02:15 PM",
-      assignedTo: "Elder Mary",
-      followUpDate: "2024-01-27",
-    },
-    {
-      id: 3,
-      name: "Anonymous",
-      email: "anonymous@request.com",
-      phone: "Not provided",
-      category: "Financial",
-      priority: "Medium",
-      status: "New",
-      subject: "Job opportunity",
-      message: "Please pray for a job opportunity. I have been unemployed for 3 months and need God's provision.",
-      submittedAt: "2024-01-21 08:45 AM",
-      assignedTo: "Unassigned",
-      followUpDate: "2024-01-24",
-    },
-    {
-      id: 4,
-      name: "Maria Santos",
-      email: "maria@example.com",
-      phone: "+971-52-456-7890",
-      category: "Spiritual",
-      priority: "Low",
-      status: "Completed",
-      subject: "Spiritual growth",
-      message: "Pray for my spiritual growth and deeper relationship with God.",
-      submittedAt: "2024-01-18 06:20 PM",
-      assignedTo: "Pastor Michael",
-      followUpDate: "2024-01-21",
-    },
-  ]
+  const fetchRequests = async () => {
+    setLoading(true)
+    try {
+      const token = getToken()
+      if (!token) return
+
+      const params = selectedChurch?.id && selectedChurch.id !== 'all'
+        ? { churchId: selectedChurch.id }
+        : {}
+
+      const data: any = await apiClient.getPrayerRequests(token, params)
+      setPrayerRequests(data.data || [])
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchMembers = async () => {
+    try {
+      const token = getToken()
+      if (!token || !selectedChurch?.id || selectedChurch.id === 'all') return
+      const data: any = await apiClient.getMembersByChurch(selectedChurch.id, token)
+      setMembers(data.data || [])
+    } catch (e) {
+      console.error("Failed to fetch members:", e)
+    }
+  }
+
+  useEffect(() => {
+    fetchRequests()
+    fetchMembers()
+  }, [selectedChurch])
+
+  const handleUpdateStatus = async (id: string, status: string) => {
+    try {
+      const token = getToken()
+      if (!token) return
+      await apiClient.updatePrayerRequest(id, { status }, token)
+      fetchRequests()
+      if (selectedRequest && selectedRequest.id === id) {
+        setSelectedRequest({ ...selectedRequest, status })
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleAssign = async (id: string, assignedTo: string) => {
+    try {
+      const token = getToken()
+      if (!token) return
+      await apiClient.updatePrayerRequest(id, { assignedTo }, token)
+      fetchRequests()
+      if (selectedRequest && selectedRequest.id === id) {
+        setSelectedRequest({ ...selectedRequest, assignedTo })
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -279,21 +292,29 @@ export function PrayerRequestsManagement() {
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
                                   <label className="text-sm font-medium">Assigned To</label>
-                                  <Select defaultValue={selectedRequest.assignedTo}>
+                                  <Select
+                                    value={selectedRequest.assignedTo}
+                                    onValueChange={(value) => handleAssign(selectedRequest.id, value)}
+                                  >
                                     <SelectTrigger>
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="Pastor Michael">Pastor Michael</SelectItem>
-                                      <SelectItem value="Elder Mary">Elder Mary</SelectItem>
-                                      <SelectItem value="Elder John">Elder John</SelectItem>
                                       <SelectItem value="Unassigned">Unassigned</SelectItem>
+                                      {members.map(member => (
+                                        <SelectItem key={member.id} value={member.id}>
+                                          {member.name}
+                                        </SelectItem>
+                                      ))}
                                     </SelectContent>
                                   </Select>
                                 </div>
                                 <div>
                                   <label className="text-sm font-medium">Status</label>
-                                  <Select defaultValue={selectedRequest.status}>
+                                  <Select
+                                    value={selectedRequest.status}
+                                    onValueChange={(value) => handleUpdateStatus(selectedRequest.id, value)}
+                                  >
                                     <SelectTrigger>
                                       <SelectValue />
                                     </SelectTrigger>

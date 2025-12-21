@@ -4,45 +4,80 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/providers/language-provider"
+
 import { Users, UserPlus, Calendar, MessageSquare, TrendingUp, Clock } from "lucide-react"
+import { useEffect, useState } from "react"
+import { fetchDashboardOverview, fetchAttendanceTrends } from "@/lib/services/dashboard-service"
+import { Alert } from "@/components/ui/alert"
+
 
 export function DashboardOverview() {
   const { isRTL } = useLanguage()
 
-  const stats = [
-    {
-      title: "Total Members",
-      value: "1,247",
-      change: "+12%",
-      changeType: "positive",
-      icon: Users,
-      color: "bg-primary",
-    },
-    {
-      title: "New Members",
-      value: "23",
-      change: "+5%",
-      changeType: "positive",
-      icon: UserPlus,
-      color: "bg-accent",
-    },
-    {
-      title: "This Week Attendance",
-      value: "892",
-      change: "-3%",
-      changeType: "negative",
-      icon: TrendingUp,
-      color: "bg-secondary",
-    },
-    {
-      title: "Prayer Requests",
-      value: "47",
-      change: "+8%",
-      changeType: "positive",
-      icon: MessageSquare,
-      color: "bg-muted",
-    },
-  ]
+  const [stats, setStats] = useState<any[] | null>(null)
+  const [trends, setTrends] = useState<any[] | null>(null)
+  const [error, setError] = useState<string>("")
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    Promise.all([
+      fetchDashboardOverview(),
+      fetchAttendanceTrends(),
+    ])
+      .then(([overview, attendanceTrends]) => {
+        console.log("Dashboard API overview response:", overview);
+        const overviewData = overview.data || {};
+        setStats([
+          {
+            title: "Total Members",
+            value: overviewData.totalMembers?.toLocaleString?.() ?? overviewData.totalMembers ?? "-",
+            change: overviewData.membersChange ?? "",
+            changeType: overviewData.membersChangeType ?? "positive",
+            icon: Users,
+            color: "bg-primary",
+          },
+          {
+            title: "Active Members",
+            value: overviewData.activeMembers?.toLocaleString?.() ?? overviewData.activeMembers ?? "-",
+            change: overviewData.activeMembersChange ?? "",
+            changeType: overviewData.activeMembersChangeType ?? "positive",
+            icon: UserPlus,
+            color: "bg-accent",
+          },
+          {
+            title: "Newcomers This Month",
+            value: overviewData.newcomersThisMonth?.toLocaleString?.() ?? overviewData.newcomersThisMonth ?? "-",
+            change: overviewData.newcomersChange ?? "",
+            changeType: overviewData.newcomersChangeType ?? "positive",
+            icon: TrendingUp,
+            color: "bg-secondary",
+          },
+          {
+            title: "Upcoming Events",
+            value: overviewData.upcomingEvents?.toLocaleString?.() ?? overviewData.upcomingEvents ?? "-",
+            change: overviewData.upcomingEventsChange ?? "",
+            changeType: overviewData.upcomingEventsChangeType ?? "positive",
+            icon: Calendar,
+            color: "bg-muted",
+          },
+          {
+            title: "Open Prayer Requests",
+            value: overviewData.openPrayerRequests?.toLocaleString?.() ?? overviewData.openPrayerRequests ?? "-",
+            change: overviewData.openPrayerRequestsChange ?? "",
+            changeType: overviewData.openPrayerRequestsChangeType ?? "positive",
+            icon: MessageSquare,
+            color: "bg-muted",
+          },
+        ])
+        setTrends(attendanceTrends)
+        setError("")
+      })
+      .catch((e) => {
+        setError(e.message || "Failed to load dashboard data")
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   const recentActivities = [
     {
@@ -92,33 +127,72 @@ export function DashboardOverview() {
     },
   ]
 
+
   return (
     <div className="space-y-6">
+      {error && <Alert variant="destructive">{error}</Alert>}
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => {
-          const IconComponent = stat.icon
-          return (
-            <Card key={stat.title} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                <div className={`w-10 h-10 ${stat.color} rounded-full flex items-center justify-center`}>
-                  <IconComponent className="w-5 h-5 text-white" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <div className="flex items-center gap-1 text-sm">
-                  <Badge variant={stat.changeType === "positive" ? "default" : "destructive"} className="text-xs px-1">
-                    {stat.change}
-                  </Badge>
-                  <span className="text-muted-foreground">from last month</span>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i} className="animate-pulse h-32" />
+            ))
+          : stats?.map((stat) => {
+              const IconComponent = stat.icon
+              return (
+                <Card key={stat.title} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+                    <div className={`w-10 h-10 ${stat.color} rounded-full flex items-center justify-center`}>
+                      <IconComponent className="w-5 h-5 text-white" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <div className="flex items-center gap-1 text-sm">
+                      <Badge variant={stat.changeType === "positive" ? "default" : "destructive"} className="text-xs px-1">
+                        {stat.change}
+                      </Badge>
+                      <span className="text-muted-foreground">from last month</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
       </div>
+
+      {/* Attendance Trends Table */}
+      {trends && trends.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Attendance Trends (Last 30 Days)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="px-2 py-1">Date</th>
+                    <th className="px-2 py-1">Service Type</th>
+                    <th className="px-2 py-1">Language</th>
+                    <th className="px-2 py-1">Present Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trends.map((row, idx) => (
+                    <tr key={idx}>
+                      <td className="px-2 py-1">{new Date(row.date).toLocaleDateString()}</td>
+                      <td className="px-2 py-1">{row.service_type}</td>
+                      <td className="px-2 py-1">{row.language}</td>
+                      <td className="px-2 py-1">{row.present_count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activities */}
@@ -204,7 +278,7 @@ export function DashboardOverview() {
 
       {/* Service Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
+        {[ 
           { service: "English Service", time: "12:30pm - 2:30pm", day: "Sunday", attendees: 234 },
           { service: "Tamil Service", time: "3:00pm - 5:00pm", day: "Sunday", attendees: 189 },
           { service: "Hindi Service", time: "4:30pm - 6:00pm", day: "Saturday", attendees: 156 },

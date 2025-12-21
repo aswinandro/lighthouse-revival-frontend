@@ -15,7 +15,7 @@ export function Footer() {
   const socialLinks = [
     { icon: Youtube, href: "https://www.youtube.com/c/LIGHTHOUSEREVIVALCHURCH", label: "YouTube" },
     { icon: Facebook, href: "https://www.facebook.com/lighthouserevivalabudhabi", label: "Facebook" },
-    { icon: Instagram, href: "#", label: "Instagram" },
+    { icon: Instagram, href: "https://www.instagram.com/lighthouserevivalchurch", label: "Instagram" },
   ]
 
   return (

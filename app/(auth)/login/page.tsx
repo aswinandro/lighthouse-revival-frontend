@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useLanguage } from "@/components/providers/language-provider"
 import { useGSAP } from "@/hooks/use-gsap"
 
 import { Button } from "@/components/ui/button"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import {
   Card,
   CardContent,
@@ -15,8 +17,10 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { apiClient } from "@/lib/api-client"
 
 export default function LoginPage() {
+  const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null)
   const { fadeIn } = useGSAP()
   const { t } = useLanguage()
@@ -25,15 +29,34 @@ export default function LoginPage() {
     if (cardRef.current) {
       fadeIn(cardRef.current, { y: 20, duration: 0.5 })
     }
-  }, [fadeIn])
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Handle login logic here
-    console.log("Login attempt with:", { email, password })
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      const data: any = await apiClient.login(email, password);
+      const token = data.token || data.accessToken || (data.data && data.data.token);
+      if (!token) {
+        setError("No token received from server. Please contact support.");
+        return;
+      }
+      localStorage.setItem("token", token);
+      const user = data.user || (data.data && data.data.user);
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      }
+      console.log("Login: Token and User stored in localStorage");
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Login failed. Please try again.");
+    }
   }
 
   return (
@@ -46,6 +69,12 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">{t("login.emailLabel")}</Label>
@@ -84,7 +113,7 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
-            {t("login.noAccount")}{" "}
+            {t("login.noAccount") + " "}
             <Link href="/signup" className="underline">
               {t("login.signUpLink")}
             </Link>
