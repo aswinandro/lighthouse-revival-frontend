@@ -7,12 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
-import { Users, TrendingUp, Calendar, QrCode, Download, AlertTriangle } from "lucide-react"
+import { Users, TrendingUp, Calendar, QrCode, Download, AlertTriangle, Clock } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect, useState } from "react"
-
 import { useChurch } from "@/components/providers/church-context"
+import { QRAttendanceManagement } from "./qr-attendance-management"
 
 export function AttendanceManagement() {
   const { selectedChurch, userRole } = useChurch()
@@ -190,10 +190,6 @@ export function AttendanceManagement() {
           <p className="text-muted-foreground">Track and manage church service attendance</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 bg-transparent">
-            <QrCode className="w-4 h-4" />
-            Generate QR
-          </Button>
           <Button className="gap-2">
             <Download className="w-4 h-4" />
             Export Report
@@ -374,6 +370,8 @@ export function AttendanceManagement() {
           )
         })}
       </div>
+
+      <QRAttendanceManagement />
     </div>
   )
 }

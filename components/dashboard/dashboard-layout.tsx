@@ -25,6 +25,7 @@ import {
   Building2,
   FileText,
   Mail,
+  QrCode,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
