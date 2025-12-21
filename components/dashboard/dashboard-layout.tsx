@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { LanguageSelector } from "@/components/ui/language-selector"
 import { ChurchSelector } from "@/components/ui/church-selector"
@@ -37,6 +38,13 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isRTL } = useLanguage();
   const { userRole } = useChurch();
+  const router = useRouter();
+
+  const handleSignOut = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user"); // Clear user data too if any
+    router.push("/login");
+  };
 
   const navigationItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard, roles: ["super_admin", "church_pastor", "church_leader", "church_believer"] },
@@ -55,9 +63,9 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   const filteredNavItems = navigationItems.filter((item) => item.roles.includes(userRole));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden font-sans">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-card border-b border-border p-4 flex items-center justify-between">
+      <div className="lg:hidden bg-card border-b border-border p-4 flex items-center justify-between flex-shrink-0 z-50">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
             <Church className="w-5 h-5 text-primary-foreground" />
@@ -72,11 +80,11 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         </div>
       </div>
 
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+            "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0 h-full",
             sidebarOpen ? "translate-x-0" : "-translate-x-full",
             isRTL && "right-0 left-auto lg:right-auto lg:left-0",
           )}
@@ -139,7 +147,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
                   <Settings className="w-4 h-4" />
                   Settings
                 </Button>
-                <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-destructive">
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-destructive hover:bg-destructive/10" onClick={handleSignOut}>
                   <LogOut className="w-4 h-4" />
                   Sign Out
                 </Button>
@@ -149,23 +157,27 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-0">
+        <main className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Desktop Header */}
           {activeTab && (
-            <div className="hidden lg:flex bg-card border-b border-border p-4 items-center justify-between">
+            <div className="hidden lg:flex bg-card border-b border-border px-8 py-4 items-center justify-between flex-shrink-0">
               <div>
-                <h2 className="text-2xl font-bold capitalize">{activeTab}</h2>
-                <p className="text-muted-foreground">Manage your church {activeTab}</p>
+                <h2 className="text-2xl font-bold capitalize tracking-tight text-white">{activeTab.replace("-", " ")}</h2>
+                <p className="text-sm text-muted-foreground">Manage your church {activeTab.replace("-", " ")}</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <ChurchSelector />
                 <LanguageSelector />
               </div>
             </div>
           )}
 
-          {/* Content */}
-          <div className="p-6">{children}</div>
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 custom-scrollbar scroll-smooth">
+            <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {children}
+            </div>
+          </div>
         </main>
       </div>
 
