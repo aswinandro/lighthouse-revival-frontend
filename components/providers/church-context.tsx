@@ -30,12 +30,38 @@ export function ChurchProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadChurches = async () => {
       try {
+        // Check user's global role from localStorage
+        const storedUser = typeof window !== 'undefined' ? localStorage.getItem("user") : null
+        let globalRole = "user" // default fallback
+
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser)
+            if (userData.role) {
+              globalRole = userData.role
+            }
+          } catch (e) {
+            console.error("Failed to parse user data:", e)
+          }
+        }
+
         const fetchedChurches = await import("@/lib/services/church-service").then(m => m.fetchChurches())
         setChurches(fetchedChurches)
         const selected = await import("@/lib/services/church-service").then(m => m.fetchSelectedChurch(fetchedChurches))
+
         if (selected) {
           setSelectedChurch(selected)
-          setUserRole(selected.role)
+          // super_admin always takes priority, otherwise use church-specific role if available, or global role as fallback
+          let roleToUse = globalRole
+          if (globalRole === "super_admin") {
+            roleToUse = "super_admin"
+          } else if (selected.role) {
+            roleToUse = selected.role
+          }
+          setUserRole(roleToUse)
+        } else {
+          // No church selected - use global role
+          setUserRole(globalRole)
         }
       } catch (error) {
         console.error("Failed to load churches:", error)
@@ -49,7 +75,30 @@ export function ChurchProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (selectedChurch) {
       localStorage.setItem("selectedChurchId", selectedChurch.id)
-      setUserRole(selectedChurch.role)
+
+      // Check user's global role
+      const storedUser = typeof window !== 'undefined' ? localStorage.getItem("user") : null
+      let globalRole = "user" // default
+
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser)
+          if (userData.role) {
+            globalRole = userData.role
+          }
+        } catch (e) {
+          console.error("Failed to parse user data:", e)
+        }
+      }
+
+      // super_admin always takes priority, otherwise use church-specific role if available, or global role as fallback
+      let roleToUse = globalRole
+      if (globalRole === "super_admin") {
+        roleToUse = "super_admin"
+      } else if (selectedChurch.role) {
+        roleToUse = selectedChurch.role
+      }
+      setUserRole(roleToUse)
     }
   }, [selectedChurch])
 

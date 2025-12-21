@@ -16,7 +16,7 @@ import { useEffect } from "react"
 import { useChurch } from "@/components/providers/church-context"
 
 export function EventsManagement() {
-  const { selectedChurch } = useChurch()
+  const { selectedChurch, userRole } = useChurch()
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -131,61 +131,63 @@ export function EventsManagement() {
           <h2 className="text-2xl font-bold">Events Management</h2>
           <p className="text-muted-foreground">Create and manage church events and activities</p>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="w-4 h-4" />
-              Create Event
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Event</DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-              <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="title">Event Title</Label>
-                <Input id="title" placeholder="Enter event title" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+        {(userRole === "super_admin" || userRole === "church_pastor" || userRole === "church_leader") && (
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="w-4 h-4" />
+                Create Event
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create New Event</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="title">Event Title</Label>
+                  <Input id="title" placeholder="Enter event title" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea id="description" placeholder="Enter event description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date">Start Date</Label>
+                  <Input id="date" type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">End Date</Label>
+                  <Input id="endDate" type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="time">Time</Label>
+                  <Input id="time" placeholder="e.g., 7:00 PM" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxAttendees">Max Attendees</Label>
+                  <Input id="maxAttendees" type="number" placeholder="100" value={formData.maxAttendees} onChange={e => setFormData({ ...formData, maxAttendees: e.target.value })} />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input id="location" placeholder="Enter event location" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input id="category" placeholder="e.g., Prayer, Youth, Outreach" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="organizer">Organizer</Label>
+                  <Input id="organizer" placeholder="Enter organizer name" value={formData.organizer} onChange={e => setFormData({ ...formData, organizer: e.target.value })} />
+                </div>
               </div>
-              <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" placeholder="Enter event description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleCreateEvent}>Create Event</Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="date">Start Date</Label>
-                <Input id="date" type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
-                <Input id="endDate" type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="time">Time</Label>
-                <Input id="time" placeholder="e.g., 7:00 PM" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maxAttendees">Max Attendees</Label>
-                <Input id="maxAttendees" type="number" placeholder="100" value={formData.maxAttendees} onChange={e => setFormData({ ...formData, maxAttendees: e.target.value })} />
-              </div>
-              <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input id="location" placeholder="Enter event location" value={formData.location} onChange={e => setFormData({ ...formData, location: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Input id="category" placeholder="e.g., Prayer, Youth, Outreach" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="organizer">Organizer</Label>
-                <Input id="organizer" placeholder="Enter organizer name" value={formData.organizer} onChange={e => setFormData({ ...formData, organizer: e.target.value })} />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline">Cancel</Button>
-              <Button onClick={handleCreateEvent}>Create Event</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Event Stats */}
@@ -289,12 +291,16 @@ export function EventsManagement() {
                   <Button variant="ghost" size="sm">
                     <Eye className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-destructive">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {(userRole === "super_admin" || userRole === "church_pastor" || userRole === "church_leader") && (
+                    <>
+                      <Button variant="ghost" size="sm">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
 

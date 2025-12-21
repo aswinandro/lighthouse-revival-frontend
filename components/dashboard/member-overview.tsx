@@ -9,8 +9,10 @@ import { useEffect, useState } from "react"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { Alert } from "@/components/ui/alert"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts"
 
 export function MemberOverview() {
+    const [user, setUser] = useState<any>(null)
     const [member, setMember] = useState<any>(null)
     const [attendance, setAttendance] = useState<any[]>([])
     const [courses, setCourses] = useState<any[]>([])
@@ -21,22 +23,25 @@ export function MemberOverview() {
         const fetchData = async () => {
             setLoading(true)
             try {
+                const storedUser = localStorage.getItem("user")
+                if (storedUser) setUser(JSON.parse(storedUser))
+
                 const token = getToken()
                 if (!token) return
 
                 // 1. Get Member Profile
-                const profileRes = await apiClient.getMyMemberProfile(token)
+                const profileRes = await apiClient.getMyMemberProfile(token) as any
                 const memberData = profileRes.data
                 setMember(memberData)
 
                 if (memberData) {
                     // 2. Get Personal Attendance
-                    const attendanceRes = await apiClient.getMemberAttendance(token, memberData.id)
+                    const attendanceRes = await apiClient.getMemberAttendance(token, memberData.id) as any
                     setAttendance(attendanceRes.data || [])
                 }
 
                 // 3. Get Course Enrollments
-                const coursesRes = await apiClient.getMyEnrollments(token)
+                const coursesRes = await apiClient.getMyEnrollments(token) as any
                 setCourses(coursesRes.data || [])
 
             } catch (e: any) {
@@ -60,11 +65,39 @@ export function MemberOverview() {
         </div>
     }
 
+    const getGraphData = () => {
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        const dataMap: { [key: string]: number } = {}
+
+        // Initialize last 6 months
+        const now = new Date()
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+            const label = months[d.getMonth()]
+            dataMap[label] = 0
+        }
+
+        attendance.forEach(record => {
+            if (record.present) {
+                const d = new Date(record.service_date)
+                const label = months[d.getMonth()]
+                if (dataMap[label] !== undefined) {
+                    dataMap[label]++
+                }
+            }
+        })
+
+        return Object.keys(dataMap).map(label => ({
+            name: label,
+            sessions: dataMap[label]
+        }))
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
                 <h2 className="text-3xl font-bold tracking-tight">
-                    Welcome back, {member?.first_name || "Member"}!
+                    Welcome back, {member?.first_name || user?.first_name || user?.firstName || "Member"}!
                 </h2>
                 <p className="text-muted-foreground">
                     Here's what's happening with your church journey.
@@ -74,9 +107,13 @@ export function MemberOverview() {
             {error && <Alert variant="destructive">{error}</Alert>}
 
             {!member && !loading && (
-                <Alert>
-                    Your account is not yet linked to a member record. Please contact your church administrator to link your profile.
-                </Alert>
+                <div className="w-full">
+                    <Alert className="w-full py-6">
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg">Your account is not yet linked to a member record. Please contact your church administrator to link your profile.</span>
+                        </div>
+                    </Alert>
+                </div>
             )}
 
             {/* Stats Summary */}
@@ -112,6 +149,36 @@ export function MemberOverview() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Attendance Graph Section */}
+            <Card className="col-span-full">
+                <CardHeader>
+                    <CardTitle>Attendance Trends</CardTitle>
+                </CardHeader>
+                <CardContent className="h-[300px] w-full mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={getGraphData()}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                            <XAxis
+                                dataKey="name"
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fill: '#888888', fontSize: 12 }}
+                            />
+                            <YAxis
+                                axisLine={false}
+                                tickLine={false}
+                                tick={{ fill: '#888888', fontSize: 12 }}
+                            />
+                            <Tooltip
+                                contentStyle={{ backgroundColor: '#1a1a1a', border: 'none', borderRadius: '8px' }}
+                                itemStyle={{ color: '#fff' }}
+                            />
+                            <Bar dataKey="sessions" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Course Progress */}
