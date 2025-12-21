@@ -50,7 +50,17 @@ class ApiClient {
     })
   }
 
-  async register(data: { email: string; password: string; name: string }) {
+  async register(data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    emirate?: string;
+    city?: string;
+    country?: string;
+    churchId?: string;
+  }) {
     return this.request("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
@@ -300,6 +310,11 @@ class ApiClient {
   // Churches endpoints
   async getChurches(token: string) {
     return this.request("/churches", { token })
+  }
+
+  async getPublicChurches(): Promise<any[]> {
+    const res: any = await this.request("/churches/public/list")
+    return res.data || res
   }
 
   async getChurch(id: string, token: string) {
