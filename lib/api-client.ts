@@ -580,6 +580,15 @@ class ApiClient {
     const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ""
     return this.request(`/users${queryString}`, { token })
   }
+
+  async getQRSessionPublicInfo(sessionId: string) {
+    return this.request(`/qr-attendance/sessions/public/${sessionId}`)
+  }
+
+  async getLatestActiveSession(churchId?: string) {
+    const queryString = churchId ? `?churchId=${churchId}` : ""
+    return this.request(`/qr-attendance/sessions/active/latest${queryString}`)
+  }
 }
 
 export const apiClient = new ApiClient(API_URL)

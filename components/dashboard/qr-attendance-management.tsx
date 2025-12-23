@@ -139,6 +139,91 @@ export function QRAttendanceManagement() {
         }
     }
 
+    const handleDownloadFlyer = (session: any) => {
+        const canvas = document.createElement("canvas")
+        canvas.width = 800
+        canvas.height = 1200
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
+
+        // Background
+        const gradient = ctx.createLinearGradient(0, 0, 0, 1200)
+        gradient.addColorStop(0, "#0f172a")
+        gradient.addColorStop(1, "#1e293b")
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, 800, 1200)
+
+        // Accent Circle
+        ctx.beginPath()
+        ctx.arc(400, 600, 300, 0, Math.PI * 2)
+        ctx.fillStyle = "rgba(59, 130, 246, 0.05)"
+        ctx.fill()
+
+        // Border
+        ctx.strokeStyle = "rgba(59, 130, 246, 0.3)"
+        ctx.lineWidth = 20
+        ctx.strokeRect(40, 40, 720, 1120)
+
+        // Header
+        ctx.fillStyle = "#ffffff"
+        ctx.font = "bold 48px Inter, system-ui, sans-serif"
+        ctx.textAlign = "center"
+        ctx.fillText("Lighthouse Revival", 400, 150)
+
+        ctx.font = "32px Inter, system-ui, sans-serif"
+        ctx.fillStyle = "#94a3b8"
+        ctx.fillText("Church International", 400, 200)
+
+        // Session Title
+        ctx.fillStyle = "#3b82f6"
+        ctx.font = "bold 64px Inter, system-ui, sans-serif"
+        ctx.fillText(session.session_name.toUpperCase(), 400, 350)
+
+        // Details Wrap
+        ctx.fillStyle = "rgba(255, 255, 255, 0.05)"
+        ctx.roundRect?.(100, 420, 600, 180, 20)
+        ctx.fill()
+
+        ctx.font = "bold 32px Inter, system-ui, sans-serif"
+        ctx.fillStyle = "#ffffff"
+        const dateStr = new Date(session.session_date).toLocaleDateString(undefined, {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })
+        ctx.fillText(dateStr, 400, 490)
+        ctx.fillText(`at ${session.session_time}`, 400, 550)
+
+        // Message
+        ctx.font = "bold 40px Inter, system-ui, sans-serif"
+        ctx.fillStyle = "#ffffff"
+        ctx.fillText("SCAN TO CHECK-IN", 400, 720)
+
+        // QR Code
+        const qrImg = new Image()
+        qrImg.crossOrigin = "anonymous"
+        qrImg.onload = () => {
+            // Draw QR code
+            ctx.fillStyle = "#ffffff"
+            ctx.roundRect?.(200, 780, 400, 400, 30)
+            ctx.fill()
+            ctx.drawImage(qrImg, 220, 800, 360, 360)
+
+            // Footer
+            ctx.fillStyle = "#64748b"
+            ctx.font = "24px Inter, system-ui, sans-serif"
+            ctx.fillText("www.lighthouserevival.org", 400, 1160)
+
+            // Download
+            const link = document.createElement("a")
+            link.download = `checkin-${session.session_name.toLowerCase().replace(/\s+/g, "-")}.png`
+            link.href = canvas.toDataURL("image/png")
+            link.click()
+        }
+        qrImg.src = session.qrCodeImage
+    }
+
     if (userRole === "member" || userRole === "user") return null
 
     return (
@@ -316,14 +401,24 @@ export function QRAttendanceManagement() {
                                                 View Details
                                             </Button>
                                             {session.is_active && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleDeactivate(session.id)}
-                                                    className="text-xs h-9 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20"
-                                                >
-                                                    Stop
-                                                </Button>
+                                                <>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleDownloadFlyer(session)}
+                                                        className="text-xs h-9 text-primary hover:text-primary hover:bg-primary/10 border border-primary/20"
+                                                    >
+                                                        Save
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => handleDeactivate(session.id)}
+                                                        className="text-xs h-9 text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20"
+                                                    >
+                                                        Stop
+                                                    </Button>
+                                                </>
                                             )}
                                         </div>
                                     </div>
