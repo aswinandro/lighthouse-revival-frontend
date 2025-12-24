@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getPrayerRequestsService, createPrayerRequestService } from "@/lib/services/prayer-requests-service"
 
+export const runtime = 'edge'
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)

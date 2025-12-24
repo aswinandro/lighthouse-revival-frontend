@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getMemberService, updateMemberService, deleteMemberService } from "@/lib/services/members-service"
 
+export const runtime = 'edge'
+
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const member = await getMemberService(params.id, 1)
