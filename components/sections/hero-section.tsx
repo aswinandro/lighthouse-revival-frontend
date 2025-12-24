@@ -111,14 +111,17 @@ export function HeroSection() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center"
           >
             <Button
+              asChild
               size="lg"
               className="px-8 py-3 text-lg relative overflow-hidden group hover:scale-105 transition-transform"
             >
-              <span className="relative z-10 flex items-center">
-                Join Our Service
-                <ArrowDown className="ml-2 w-5 h-5 animate-bounce" />
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Link href="/check-in">
+                <span className="relative z-10 flex items-center">
+                  Join Our Service
+                  <ArrowDown className="ml-2 w-5 h-5 animate-bounce" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
             </Button>
 
             <Button

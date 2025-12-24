@@ -9,9 +9,12 @@ import { Users, UserPlus, Calendar, MessageSquare, TrendingUp, Clock } from "luc
 import { useEffect, useState } from "react"
 import { fetchDashboardOverview, fetchAttendanceTrends } from "@/lib/services/dashboard-service"
 import { Alert } from "@/components/ui/alert"
+import { useChurch } from "@/components/providers/church-context"
+import { MemberOverview } from "./member-overview"
 
 
 export function DashboardOverview() {
+  const { userRole, selectedChurch, isLoading: isChurchLoading } = useChurch()
   const { isRTL } = useLanguage()
 
   const [stats, setStats] = useState<any[] | null>(null)
@@ -20,12 +23,15 @@ export function DashboardOverview() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (isChurchLoading || userRole === "member" || userRole === "user") return
+
     setLoading(true)
+    const churchId = selectedChurch?.id === "all" ? undefined : selectedChurch?.id
     Promise.all([
-      fetchDashboardOverview(),
-      fetchAttendanceTrends(),
+      fetchDashboardOverview(churchId),
+      fetchAttendanceTrends(churchId),
     ])
-      .then(([overview, attendanceTrends]) => {
+      .then(([overview, attendanceTrends]: [any, any]) => {
         console.log("Dashboard API overview response:", overview);
         const overviewData = overview.data || {};
         setStats([
@@ -77,7 +83,23 @@ export function DashboardOverview() {
         setError(e.message || "Failed to load dashboard data")
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedChurch?.id, isChurchLoading, userRole])
+
+  if (isChurchLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-32 bg-muted rounded-lg" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="h-64 bg-muted rounded-lg" />
+          <div className="h-64 bg-muted rounded-lg" />
+        </div>
+      </div>
+    )
+  }
+
+  if (userRole === "member" || userRole === "user") {
+    return <MemberOverview />
+  }
 
   const recentActivities = [
     {
@@ -130,35 +152,47 @@ export function DashboardOverview() {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-3xl font-bold tracking-tight">
+          Welcome back, {(() => {
+            const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("user") || "{}") : {};
+            return user.first_name || user.firstName || "Admin";
+          })()}!
+        </h2>
+        <p className="text-muted-foreground">
+          {userRole === "super_admin" ? "Here is the global overview of all churches." : "Here is what is happening in your church."}
+        </p>
+      </div>
+
       {error && <Alert variant="destructive">{error}</Alert>}
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="animate-pulse h-32" />
-            ))
+            <Card key={i} className="animate-pulse h-32" />
+          ))
           : stats?.map((stat) => {
-              const IconComponent = stat.icon
-              return (
-                <Card key={stat.title} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                    <div className={`w-10 h-10 ${stat.color} rounded-full flex items-center justify-center`}>
-                      <IconComponent className="w-5 h-5 text-white" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <div className="flex items-center gap-1 text-sm">
-                      <Badge variant={stat.changeType === "positive" ? "default" : "destructive"} className="text-xs px-1">
-                        {stat.change}
-                      </Badge>
-                      <span className="text-muted-foreground">from last month</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+            const IconComponent = stat.icon
+            return (
+              <Card key={stat.title} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+                  <div className={`w-10 h-10 ${stat.color} rounded-full flex items-center justify-center`}>
+                    <IconComponent className="w-5 h-5 text-white" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="flex items-center gap-1 text-sm">
+                    <Badge variant={stat.changeType === "positive" ? "default" : "destructive"} className="text-xs px-1">
+                      {stat.change}
+                    </Badge>
+                    <span className="text-muted-foreground">from last month</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
       </div>
 
       {/* Attendance Trends Table */}
@@ -278,7 +312,7 @@ export function DashboardOverview() {
 
       {/* Service Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[ 
+        {[
           { service: "English Service", time: "12:30pm - 2:30pm", day: "Sunday", attendees: 234 },
           { service: "Tamil Service", time: "3:00pm - 5:00pm", day: "Sunday", attendees: 189 },
           { service: "Hindi Service", time: "4:30pm - 6:00pm", day: "Saturday", attendees: 156 },

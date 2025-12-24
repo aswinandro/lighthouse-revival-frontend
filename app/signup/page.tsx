@@ -82,7 +82,7 @@ export default function SignupPage() {
     setSuccess(null)
     setIsLoading(true)
     try {
-      await apiClient.register({
+      const response = await apiClient.register({
         firstName,
         lastName,
         email,
@@ -94,10 +94,23 @@ export default function SignupPage() {
         churchId
       })
 
-      setSuccess("Registration successful! You can now log in.")
-      setTimeout(() => {
-        router.push("/login")
-      }, 2000)
+      setSuccess(`Welcome, ${firstName}! Registration successful. Redirecting to your dashboard...`)
+
+      // Automatic Login
+      if (response && response.data && response.data.token) {
+        localStorage.setItem("token", response.data.token)
+        localStorage.setItem("user", JSON.stringify(response.data.user))
+
+        // Wait a bit to show the success message
+        setTimeout(() => {
+          router.push("/dashboard")
+        }, 1500)
+      } else {
+        // Fallback to login if token not returned for some reason
+        setTimeout(() => {
+          router.push("/login")
+        }, 2000)
+      }
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.")
     } finally {

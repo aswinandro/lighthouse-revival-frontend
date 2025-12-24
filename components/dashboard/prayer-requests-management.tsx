@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MessageSquare, Eye, Heart, Clock, CheckCircle, Mail, Phone } from "lucide-react"
+import { MessageSquare, Eye, Heart, Clock, CheckCircle, Mail, Phone, Plus } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect } from "react"
@@ -20,7 +21,14 @@ export function PrayerRequestsManagement() {
   const [prayerRequests, setPrayerRequests] = useState<any[]>([])
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [newRequestOpen, setNewRequestOpen] = useState(false)
   const [members, setMembers] = useState<any[]>([])
+  const [newRequest, setNewRequest] = useState({
+    subject: "",
+    category: "Spiritual",
+    priority: "Medium",
+    message: ""
+  })
 
   const fetchRequests = async () => {
     setLoading(true)
@@ -85,6 +93,34 @@ export function PrayerRequestsManagement() {
     }
   }
 
+  const handleCreateRequest = async () => {
+    try {
+      const token = getToken()
+      if (!token) return
+
+      const user = JSON.parse(localStorage.getItem("user") || "{}")
+      const payload = {
+        ...newRequest,
+        name: user.firstName + " " + user.lastName,
+        email: user.email,
+        phone: user.phone || "",
+        church_id: selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
+      }
+
+      await apiClient.createPrayerRequest(payload, token)
+      setNewRequestOpen(false)
+      setNewRequest({
+        subject: "",
+        category: "Spiritual",
+        priority: "Medium",
+        message: ""
+      })
+      fetchRequests()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "High":
@@ -136,15 +172,89 @@ export function PrayerRequestsManagement() {
           <h2 className="text-2xl font-bold">Prayer Requests</h2>
           <p className="text-muted-foreground">Manage and respond to prayer requests from the community</p>
         </div>
-        <div className="flex gap-2">
-          <Badge variant="outline" className="gap-1">
-            <MessageSquare className="w-3 h-3" />
-            {prayerRequests.filter((r) => r.status === "New").length} New
-          </Badge>
-          <Badge variant="outline" className="gap-1">
-            <Clock className="w-3 h-3" />
-            {prayerRequests.filter((r) => r.status === "In Progress").length} In Progress
-          </Badge>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Dialog open={newRequestOpen} onOpenChange={setNewRequestOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="w-4 h-4" />
+                New Request
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Submit Prayer Request</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Subject</label>
+                  <Input
+                    placeholder="e.g., Healing for family member"
+                    value={newRequest.subject}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewRequest({ ...newRequest, subject: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Category</label>
+                    <Select
+                      value={newRequest.category}
+                      onValueChange={v => setNewRequest({ ...newRequest, category: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Health">Health</SelectItem>
+                        <SelectItem value="Family">Family</SelectItem>
+                        <SelectItem value="Financial">Financial</SelectItem>
+                        <SelectItem value="Spiritual">Spiritual</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Priority</label>
+                    <Select
+                      value={newRequest.priority}
+                      onValueChange={v => setNewRequest({ ...newRequest, priority: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Prayer Request</label>
+                  <Textarea
+                    placeholder="Describe your prayer request details..."
+                    className="min-h-[100px]"
+                    value={newRequest.message}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewRequest({ ...newRequest, message: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setNewRequestOpen(false)}>Cancel</Button>
+                <Button onClick={handleCreateRequest}>Submit Request</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <div className="flex gap-2">
+            <Badge variant="outline" className="gap-1">
+              <MessageSquare className="w-3 h-3" />
+              {prayerRequests.filter((r) => r.status === "New").length} New
+            </Badge>
+            <Badge variant="outline" className="gap-1">
+              <Clock className="w-3 h-3" />
+              {prayerRequests.filter((r) => r.status === "In Progress").length} In Progress
+            </Badge>
+          </div>
         </div>
       </div>
 

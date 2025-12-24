@@ -1,7 +1,7 @@
 import { apiClient } from "../api-client";
 import { getToken } from "../utils";
 
-export async function fetchDashboardOverview() {
+export async function fetchDashboardOverview(churchId?: string) {
   const token = getToken();
   if (!token) {
     console.warn('No token found, redirecting to login');
@@ -11,7 +11,7 @@ export async function fetchDashboardOverview() {
   }
 
   try {
-    return await apiClient.getDashboardOverview(token);
+    return await apiClient.getDashboardOverview(token, churchId);
   } catch (error: any) {
     if (error.message.includes("401")) {
       localStorage.removeItem("token");
@@ -22,7 +22,7 @@ export async function fetchDashboardOverview() {
   }
 }
 
-export async function fetchAttendanceTrends() {
+export async function fetchAttendanceTrends(churchId?: string) {
   const token = getToken();
   if (!token) {
     console.warn('No token found, redirecting to login');
@@ -32,7 +32,7 @@ export async function fetchAttendanceTrends() {
   }
 
   try {
-    return await apiClient.getAttendanceTrends(token);
+    return await apiClient.getAttendanceTrends(token, churchId);
   } catch (error: any) {
     if (error.message.includes("401")) {
       localStorage.removeItem("token");

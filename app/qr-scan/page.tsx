@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,14 @@ import { apiClient } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 
 export default function QRScanPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto py-8 px-4 text-center">Loading scanner...</div>}>
+      <QRScanContent />
+    </Suspense>
+  )
+}
+
+function QRScanContent() {
   const [qrCode, setQrCode] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
@@ -26,6 +34,45 @@ export default function QRScanPage() {
   })
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Auto-detect sessionId from URL
+  useEffect(() => {
+    const sessionId = searchParams.get("sessionId")
+    if (sessionId) {
+      setQrCode(sessionId)
+
+      // Auto-fill user data if logged in
+      const storedUser = JSON.parse(localStorage.getItem("user") || "{}")
+      if (storedUser.phone || storedUser.email) {
+        setPhone(storedUser.phone || "")
+        setEmail(storedUser.email || "")
+
+        // Auto-trigger scan if we have both session and user data
+        setTimeout(() => {
+          handleAutoScan(sessionId, storedUser.phone, storedUser.email)
+        }, 500)
+      }
+    }
+  }, [searchParams])
+
+  const handleAutoScan = async (sid: string, p: string, e: string) => {
+    setLoading(true)
+    try {
+      const response = await apiClient.scanQRCode({ qrCode: sid, phone: p, email: e }) as any
+      setResult(response.data)
+      if (response.data.type === "new_visitor") {
+        setShowSignUp(true)
+        setSignUpData((prev) => ({ ...prev, phone: p, email: e }))
+      } else {
+        toast({ title: "Success", description: response.data.message })
+      }
+    } catch (err: any) {
+      console.error("Auto scan failed", err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleScan = async () => {
     if (!qrCode) {

@@ -70,7 +70,7 @@ export default function PreachingSchedulesManagement() {
       if (!token) throw new Error("No token found")
 
       const params: any = {}
-      if (userRole !== "super_admin" && selectedChurch?.id) {
+      if (selectedChurch?.id && selectedChurch.id !== 'all') {
         params.churchId = selectedChurch.id
       }
 

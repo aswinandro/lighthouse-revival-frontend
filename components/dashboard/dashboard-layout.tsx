@@ -25,6 +25,7 @@ import {
   Building2,
   FileText,
   Mail,
+  QrCode,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -39,7 +40,7 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ first_name?: string; last_name?: string; email?: string } | null>(null);
   const { isRTL } = useLanguage();
-  const { userRole } = useChurch();
+  const { userRole, isLoading: isChurchLoading } = useChurch();
   const router = useRouter();
 
   useEffect(() => {
@@ -70,13 +71,13 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
   };
 
   const navigationItems = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard, roles: ["super_admin", "church_pastor", "church_leader", "church_believer"] },
+    { id: "overview", label: "Overview", icon: LayoutDashboard, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
     { id: "members", label: "Members", icon: Users, roles: ["super_admin", "church_pastor", "church_leader"] },
     { id: "newcomers", label: "Newcomers", icon: UserPlus, roles: ["super_admin", "church_pastor", "church_leader"] },
-    { id: "attendance", label: "Attendance", icon: BarChart3, roles: ["super_admin", "church_pastor", "church_leader"] },
-    { id: "courses", label: "Courses", icon: BookOpen, roles: ["super_admin", "church_pastor", "church_leader"] },
-    { id: "events", label: "Events", icon: Calendar, roles: ["super_admin", "church_pastor", "church_leader"] },
-    { id: "prayers", label: "Prayer Requests", icon: MessageSquare, roles: ["super_admin", "church_pastor", "church_leader"] },
+    { id: "attendance", label: "Attendance", icon: BarChart3, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
+    { id: "courses", label: "Courses", icon: BookOpen, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
+    { id: "events", label: "Events", icon: Calendar, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
+    { id: "prayers", label: "Prayer Requests", icon: MessageSquare, roles: ["super_admin", "church_pastor", "church_leader", "member", "user"] },
     { id: "ministries", label: "Ministries", icon: Church, roles: ["super_admin", "church_pastor", "church_leader"] },
     { id: "churches", label: "Churches", icon: Building2, roles: ["super_admin"] },
     { id: "schedules", label: "Preaching Schedules", icon: Calendar, roles: ["super_admin", "church_pastor"] },
@@ -127,31 +128,39 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-              {filteredNavItems.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <Button
-                    key={item.id}
-                    variant={activeTab === item.id ? "default" : "ghost"}
-                    className={cn(
-                      "w-full justify-start gap-3 h-11",
-                      activeTab === item.id && "bg-primary text-primary-foreground",
-                      isRTL && "flex-row-reverse",
-                    )}
-                    onClick={() => {
-                      if (onTabChange) {
-                        onTabChange(item.id);
-                        setSidebarOpen(false);
-                      }
-                    }}
-                    disabled={false}
-                  >
-                    <IconComponent className="w-5 h-5" />
-                    {item.label}
-                  </Button>
-                );
-              })}
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto font-medium">
+              {isChurchLoading ? (
+                <div className="space-y-3 pt-2">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="h-11 w-full bg-muted/50 rounded-md animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                filteredNavItems.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <Button
+                      key={item.id}
+                      variant={activeTab === item.id ? "default" : "ghost"}
+                      className={cn(
+                        "w-full justify-start gap-3 h-11",
+                        activeTab === item.id && "bg-primary text-primary-foreground",
+                        isRTL && "flex-row-reverse",
+                      )}
+                      onClick={() => {
+                        if (onTabChange) {
+                          onTabChange(item.id);
+                          setSidebarOpen(false);
+                        }
+                      }}
+                      disabled={false}
+                    >
+                      <IconComponent className="w-5 h-5" />
+                      {item.label}
+                    </Button>
+                  );
+                })
+              )}
             </nav>
 
             {/* User Section */}

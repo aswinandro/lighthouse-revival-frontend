@@ -13,18 +13,21 @@ import { useChurch } from "@/components/providers/church-context"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect, useState } from "react"
+import { WeeklyReportForm } from "./weekly-report-form"
 
 export function WeeklyReportsManagement() {
-  const { userRole } = useChurch()
+  const { userRole, selectedChurch } = useChurch()
   const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
   const fetchReports = async () => {
     setLoading(true)
     try {
       const token = getToken()
       if (!token) return
-      const data: any = await apiClient.getWeeklyReports(token)
+      const churchId = selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
+      const data: any = await apiClient.getWeeklyReports(token, { churchId })
       setReports(data.data || [])
     } catch (e) {
       console.error(e)
@@ -35,7 +38,7 @@ export function WeeklyReportsManagement() {
 
   useEffect(() => {
     fetchReports()
-  }, [])
+  }, [selectedChurch])
 
   return (
     <div className="space-y-6">
@@ -47,6 +50,30 @@ export function WeeklyReportsManagement() {
             {userRole === "super_admin" ? "Review and approve weekly church reports" : "View your submitted reports"}
           </p>
         </div>
+
+        {userRole === "church_pastor" && (
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Submit New Report
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Weekly Church Report Entry</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <WeeklyReportForm
+                  onSuccess={() => {
+                    setCreateDialogOpen(false)
+                    fetchReports()
+                  }}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       {/* Summary Stats */}

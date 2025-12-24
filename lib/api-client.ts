@@ -6,11 +6,19 @@ interface RequestOptions extends RequestInit {
   token?: string
 }
 
+export interface AuthResponse {
+  status: string;
+  data: {
+    user: any;
+    token: string;
+  };
+}
+
 class ApiClient {
   private baseUrl: string
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl || "http://localhost:5000/api"
+    this.baseUrl = baseUrl
   }
 
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
@@ -34,9 +42,12 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({
-        message: "An error occurred",
+        message: `HTTP error! status: ${response.status}`,
       }))
-      throw new Error(error.message || `HTTP error! status: ${response.status}`)
+      const msg = (error && typeof error === 'object' && error.message)
+        ? error.message
+        : `HTTP error! status: ${response.status}`;
+      throw new Error(msg)
     }
 
     return response.json()
@@ -44,7 +55,7 @@ class ApiClient {
 
   // Auth endpoints
   async login(email: string, password: string) {
-    return this.request("/auth/login", {
+    return this.request<AuthResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     })
@@ -61,7 +72,7 @@ class ApiClient {
     country?: string;
     churchId?: string;
   }) {
-    return this.request("/auth/register", {
+    return this.request<AuthResponse>("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     })
@@ -72,8 +83,9 @@ class ApiClient {
   }
 
   // Members endpoints
-  async getMembers(token: string) {
-    return this.request("/members", { token })
+  async getMembers(token: string, params?: { churchId?: string; status?: string; language?: string; search?: string }) {
+    const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ""
+    return this.request(`/members${queryString}`, { token })
   }
 
   async getMembersByChurch(churchId: string, token: string) {
@@ -295,20 +307,24 @@ class ApiClient {
   }
 
   // Dashboard endpoints
-  async getDashboardOverview(token: string) {
-    return this.request("/dashboard/overview", { token })
+  async getDashboardOverview(token: string, churchId?: string) {
+    const url = churchId ? `/dashboard/overview?churchId=${churchId}` : "/dashboard/overview"
+    return this.request(url, { token })
   }
 
-  async getAttendanceTrends(token: string) {
-    return this.request("/dashboard/attendance-trends", { token })
+  async getAttendanceTrends(token: string, churchId?: string) {
+    const url = churchId ? `/dashboard/attendance-trends?churchId=${churchId}` : "/dashboard/attendance-trends"
+    return this.request(url, { token })
   }
 
-  async getLanguageDistribution(token: string) {
-    return this.request("/dashboard/language-distribution", { token })
+  async getLanguageDistribution(token: string, churchId?: string) {
+    const url = churchId ? `/dashboard/language-distribution?churchId=${churchId}` : "/dashboard/language-distribution"
+    return this.request(url, { token })
   }
 
-  async getRecentActivity(token: string) {
-    return this.request("/dashboard/recent-activity", { token })
+  async getRecentActivity(token: string, churchId?: string) {
+    const url = churchId ? `/dashboard/recent-activity?churchId=${churchId}` : "/dashboard/recent-activity"
+    return this.request(url, { token })
   }
 
   // Churches endpoints
@@ -543,10 +559,35 @@ class ApiClient {
     return this.request(`/qr-attendance/members/${memberId}/history${queryString}`, { token })
   }
 
+  async getMyEnrollments(token: string) {
+    return this.request("/courses/my-enrollments", { token })
+  }
+
+  async getMemberAttendance(token: string, memberId: string) {
+    return this.request(`/attendance?memberId=${memberId}`, { token })
+  }
+
+  async getMyMemberProfile(token: string) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}")
+    if (!user.email) return { data: null }
+
+    const result: any = await this.request(`/members?search=${user.email}`, { token })
+    return { data: result.data?.[0] || null }
+  }
+
   // Users endpoints
   async getUsers(token: string, params?: { role?: string; churchId?: string }) {
     const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : ""
     return this.request(`/users${queryString}`, { token })
+  }
+
+  async getQRSessionPublicInfo(sessionId: string) {
+    return this.request(`/qr-attendance/sessions/public/${sessionId}`)
+  }
+
+  async getLatestActiveSession(churchId?: string) {
+    const queryString = churchId ? `?churchId=${churchId}` : ""
+    return this.request(`/qr-attendance/sessions/active/latest${queryString}`)
   }
 }
 

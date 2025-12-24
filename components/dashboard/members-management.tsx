@@ -35,12 +35,21 @@ export interface Member {
 }
 
 export default function MembersManagement() {
-  const { selectedChurch } = useChurch();
+  const { selectedChurch, isLoading: isChurchLoading } = useChurch();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
+
+  if (isChurchLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-20 bg-muted rounded-lg" />
+        <div className="h-64 bg-muted rounded-lg" />
+      </div>
+    )
+  }
   const [error, setError] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -63,16 +72,14 @@ export default function MembersManagement() {
     setLoading(true);
     setError("");
     try {
-      const churchId = selectedChurch?.id;
+      const churchId = selectedChurch?.id === 'all' ? undefined : selectedChurch?.id;
       const token = getToken();
       if (!token) throw new Error("No token found");
 
-      const data: any = await apiClient.getMembers(token);
+      const data: any = await apiClient.getMembers(token, { churchId });
       let membersRaw: any[] = Array.isArray(data) ? data : (data.members ?? data.data ?? []);
-      // If a church is selected, filter by church; otherwise, show all (super admin)
-      if (churchId && churchId !== "" && churchId !== "all") {
-        membersRaw = membersRaw.filter((m) => String(m.church_id) === String(churchId));
-      }
+      // Local filtering for other criteria can remain here if needed, 
+      // but server-side church filtering is now handled.
       // Map backend fields to frontend Member type
       let membersArray: Member[] = membersRaw.map((m) => ({
         id: String(m.id),
