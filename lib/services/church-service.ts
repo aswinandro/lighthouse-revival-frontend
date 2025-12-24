@@ -2,8 +2,9 @@ import { Church } from "@/components/providers/church-context"
 
 export async function fetchChurches(): Promise<Church[]> {
   try {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://lighthouse-backend.lighthousevercel.workers.dev/api"
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    const res = await fetch("http://localhost:5000/api/churches", {
+    const res = await fetch(`${API_URL}/churches`, {
       method: "GET",
       headers: {
         "Authorization": `Bearer ${token}`,

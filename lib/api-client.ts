@@ -18,7 +18,7 @@ class ApiClient {
   private baseUrl: string
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl || "http://localhost:5000/api"
+    this.baseUrl = baseUrl
   }
 
   private async request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
