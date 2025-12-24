@@ -8,7 +8,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const churchId = searchParams.get("churchId") || "1"
 
-    const newcomers = await getNewcomersService(Number.parseInt(churchId))
+    const newcomers = await getNewcomersService({
+      churchId: Number.parseInt(churchId)
+    })
     return NextResponse.json({ success: true, data: newcomers })
   } catch (error) {
     console.error("Error fetching newcomers:", error)

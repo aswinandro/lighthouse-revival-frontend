@@ -8,7 +8,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const churchId = searchParams.get("churchId") || "1"
 
-    const members = await getMembersService(Number.parseInt(churchId))
+    const members = await getMembersService({
+      churchId: Number.parseInt(churchId)
+    })
     return NextResponse.json({ success: true, data: members })
   } catch (error) {
     console.error("Error fetching members:", error)

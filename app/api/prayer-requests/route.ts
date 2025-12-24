@@ -8,7 +8,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const churchId = searchParams.get("churchId") || "1"
 
-    const requests = await getPrayerRequestsService(Number.parseInt(churchId))
+    const requests = await getPrayerRequestsService({
+      churchId: Number.parseInt(churchId)
+    })
     return NextResponse.json({ success: true, data: requests })
   } catch (error) {
     console.error("Error fetching prayer requests:", error)
