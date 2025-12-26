@@ -167,13 +167,14 @@ export function WeeklyReportsManagement() {
                 <TableHead>Net</TableHead>
                 <TableHead>Attendance</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Reviewer</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {reports.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={userRole === "super_admin" ? 9 : 8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={userRole === "super_admin" ? 10 : 9} className="text-center py-8 text-muted-foreground">
                     No reports found.
                   </TableCell>
                 </TableRow>
@@ -191,6 +192,20 @@ export function WeeklyReportsManagement() {
                       <Badge variant="outline" className={getStatusColor(report.status)}>
                         {report.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {report.reviewer ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{report.reviewer?.first_name ? `${report.reviewer.first_name} ${report.reviewer.last_name}` : 'Admin'}</span>
+                          {report.super_admin_feedback && (
+                            <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none px-1 h-5">
+                              <FileText className="w-3 h-3" />
+                            </Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs italic">Pending</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <Dialog>
