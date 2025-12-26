@@ -111,173 +111,216 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-[1600px] mx-auto">
             {error && <Alert variant="destructive">{error}</Alert>}
             {success && <Alert className="bg-green-500/10 text-green-500 border-green-500/20">Report submitted successfully!</Alert>}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Basic Info */}
-                <Card className="md:col-span-2">
-                    <CardHeader>
-                        <CardTitle className="text-lg">Report Period</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Header: Report Period */}
+            <Card className="border-primary/20 shadow-sm">
+                <CardHeader className="pb-3 px-6 pt-6">
+                    <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
+                        Report Period
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="px-6 pb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end">
                         <div className="space-y-2">
-                            <Label htmlFor="report_week_start">Week Start Date</Label>
-                            <Input id="report_week_start" type="date" {...register("report_week_start", { required: true })} />
+                            <Label htmlFor="report_week_start" className="text-sm font-semibold">Week Start Date</Label>
+                            <Input id="report_week_start" type="date" className="h-11" {...register("report_week_start", { required: true })} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="report_week_end">Week End Date</Label>
-                            <Input id="report_week_end" type="date" {...register("report_week_end", { required: true })} />
+                            <Label htmlFor="report_week_end" className="text-sm font-semibold">Week End Date</Label>
+                            <Input id="report_week_end" type="date" className="h-11" {...register("report_week_end", { required: true })} />
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+                {/* Financial Summary card (Integrated Income & Expenses if needed, but let's keep separate cards in a 3-column setup) */}
 
                 {/* Income Section */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Income (AED)</CardTitle>
+                <Card className="shadow-sm h-full">
+                    <CardHeader className="bg-green-50/50 border-b border-green-100 mb-4">
+                        <CardTitle className="text-lg font-bold text-green-700">Income (AED)</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="tithe_amount">Tithes</Label>
-                            <Input id="tithe_amount" type="number" step="0.01" {...register("tithe_amount")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="offering_amount">General Offering</Label>
-                            <Input id="offering_amount" type="number" step="0.01" {...register("offering_amount")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="special_offering_amount">Special Offering</Label>
-                            <Input id="special_offering_amount" type="number" step="0.01" {...register("special_offering_amount")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="donations_amount">Donations</Label>
-                            <Input id="donations_amount" type="number" step="0.01" {...register("donations_amount")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="other_income">Other Income</Label>
-                            <Input id="other_income" type="number" step="0.01" {...register("other_income")} />
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="tithe_amount">Tithes</Label>
+                                <Input id="tithe_amount" type="number" step="0.01" className="h-10" {...register("tithe_amount")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="offering_amount">General Offering</Label>
+                                <Input id="offering_amount" type="number" step="0.01" className="h-10" {...register("offering_amount")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="special_offering_amount">Special Offering</Label>
+                                <Input id="special_offering_amount" type="number" step="0.01" className="h-10" {...register("special_offering_amount")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="donations_amount">Donations</Label>
+                                <Input id="donations_amount" type="number" step="0.01" className="h-10" {...register("donations_amount")} />
+                            </div>
+                            <div className="space-y-2 xl:col-span-2">
+                                <Label htmlFor="other_income">Other Income</Label>
+                                <Input id="other_income" type="number" step="0.01" className="h-10" {...register("other_income")} />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Expenses Section */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Expenses (AED)</CardTitle>
+                <Card className="lg:col-span-2 shadow-sm h-full">
+                    <CardHeader className="bg-red-50/50 border-b border-red-100 mb-4">
+                        <CardTitle className="text-lg font-bold text-red-700">Expenses (AED)</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="rent_expense">Rent</Label>
-                            <Input id="rent_expense" type="number" step="0.01" {...register("rent_expense")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="utilities_expense">Utilities (Water & Elec)</Label>
-                            <Input id="utilities_expense" type="number" step="0.01" {...register("utilities_expense")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="ministry_expense">Ministry Expense</Label>
-                            <Input id="ministry_expense" type="number" step="0.01" {...register("ministry_expense")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="transportation_expense">Transportation</Label>
-                            <Input id="transportation_expense" type="number" step="0.01" {...register("transportation_expense")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="other_expenses">Other Expenses</Label>
-                            <Input id="other_expenses" type="number" step="0.01" {...register("other_expenses")} />
+                    <CardContent className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-6 gap-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="rent_expense">Rent</Label>
+                                <Input id="rent_expense" type="number" step="0.01" className="h-10" {...register("rent_expense")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="utilities_expense">Utilities</Label>
+                                <Input id="utilities_expense" type="number" step="0.01" className="h-10" {...register("utilities_expense")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="ministry_expense">Ministry</Label>
+                                <Input id="ministry_expense" type="number" step="0.01" className="h-10" {...register("ministry_expense")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="transportation_expense">Transportation</Label>
+                                <Input id="transportation_expense" type="number" step="0.01" className="h-10" {...register("transportation_expense")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="maintenance_expense">Maintenance</Label>
+                                <Input id="maintenance_expense" type="number" step="0.01" className="h-10" {...register("maintenance_expense")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="staff_expense">Staff Expense</Label>
+                                <Input id="staff_expense" type="number" step="0.01" className="h-10" {...register("staff_expense")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="outreach_expense">Outreach</Label>
+                                <Input id="outreach_expense" type="number" step="0.01" className="h-10" {...register("outreach_expense")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="other_expenses">Other Expenses</Label>
+                                <Input id="other_expenses" type="number" step="0.01" className="h-10" {...register("other_expenses")} />
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="expense_notes">Expense Notes</Label>
-                            <Textarea id="expense_notes" {...register("expense_notes")} placeholder="Details about expenses..." />
+                            <Input id="expense_notes" className="h-10" {...register("expense_notes")} placeholder="Briefly describe what expenses were for..." />
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Attendance Section */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Service Attendance</CardTitle>
+                <Card className="shadow-sm">
+                    <CardHeader className="bg-blue-50/50 border-b border-blue-100 mb-4">
+                        <CardTitle className="text-lg font-bold text-blue-700">Attendance</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="sunday_service_attendance">Sunday Service</Label>
-                            <Input id="sunday_service_attendance" type="number" {...register("sunday_service_attendance")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="midweek_service_attendance">Midweek Service</Label>
-                            <Input id="midweek_service_attendance" type="number" {...register("midweek_service_attendance")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="youth_service_attendance">Youth Service</Label>
-                            <Input id="youth_service_attendance" type="number" {...register("youth_service_attendance")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="children_service_attendance">Children's Service</Label>
-                            <Input id="children_service_attendance" type="number" {...register("children_service_attendance")} />
+                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="sunday_service_attendance">Sunday Service</Label>
+                                <Input id="sunday_service_attendance" type="number" className="h-10" {...register("sunday_service_attendance")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="midweek_service_attendance">Midweek Service</Label>
+                                <Input id="midweek_service_attendance" type="number" className="h-10" {...register("midweek_service_attendance")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="prayer_meeting_attendance">Prayer Meeting</Label>
+                                <Input id="prayer_meeting_attendance" type="number" className="h-10" {...register("prayer_meeting_attendance")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="youth_service_attendance">Youth Service</Label>
+                                <Input id="youth_service_attendance" type="number" className="h-10" {...register("youth_service_attendance")} />
+                            </div>
+                            <div className="space-y-2 xl:col-span-2">
+                                <Label htmlFor="children_service_attendance">Children's Service</Label>
+                                <Input id="children_service_attendance" type="number" className="h-10" {...register("children_service_attendance")} />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Ministry Stats */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-lg">Ministry Statistics</CardTitle>
+                {/* Ministry Statistics */}
+                <Card className="lg:col-span-2 shadow-sm">
+                    <CardHeader className="bg-purple-50/50 border-b border-purple-100 mb-4">
+                        <CardTitle className="text-lg font-bold text-purple-700">Ministry Statistics</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="new_converts">New Converts</Label>
-                                <Input id="new_converts" type="number" {...register("new_converts")} />
+                                <Input id="new_converts" type="number" className="h-10" {...register("new_converts")} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="new_members">New Members</Label>
-                                <Input id="new_members" type="number" {...register("new_members")} />
+                                <Input id="new_members" type="number" className="h-10" {...register("new_members")} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="water_baptisms">Water Baptisms</Label>
-                                <Input id="water_baptisms" type="number" {...register("water_baptisms")} />
+                                <Input id="water_baptisms" type="number" className="h-10" {...register("water_baptisms")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="spirit_baptisms">Spirit Baptisms</Label>
+                                <Input id="spirit_baptisms" type="number" className="h-10" {...register("spirit_baptisms")} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="home_visits">Home Visits</Label>
-                                <Input id="home_visits" type="number" {...register("home_visits")} />
+                                <Input id="home_visits" type="number" className="h-10" {...register("home_visits")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="hospital_visits">Hospital Visits</Label>
+                                <Input id="hospital_visits" type="number" className="h-10" {...register("hospital_visits")} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="counseling_sessions">Counseling</Label>
+                                <Input id="counseling_sessions" type="number" className="h-10" {...register("counseling_sessions")} />
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Notes Section */}
-                <Card className="md:col-span-2">
+                {/* Notes Section - Pulling into a 3 column layout for desktop */}
+                <Card className="lg:col-span-3 shadow-sm border-t-4 border-t-primary">
                     <CardHeader>
-                        <CardTitle className="text-lg">Ministry Highlights & Challenges</CardTitle>
+                        <CardTitle className="text-lg font-bold">Additional Information</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="highlights">Highlights</Label>
-                            <Textarea id="highlights" {...register("highlights")} rows={3} placeholder="What went well this week?" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="challenges">Challenges</Label>
-                            <Textarea id="challenges" {...register("challenges")} rows={3} placeholder="Any difficulties faced?" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="prayer_requests">Prayer Requests</Label>
-                            <Textarea id="prayer_requests" {...register("prayer_requests")} rows={3} placeholder="Specific prayer needs for your church..." />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="upcoming_events">Upcoming Events</Label>
-                            <Textarea id="upcoming_events" {...register("upcoming_events")} rows={3} placeholder="What's coming up next week?" />
+                    <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="highlights" className="font-semibold">Highlights</Label>
+                                <Textarea id="highlights" {...register("highlights")} rows={3} className="resize-none" placeholder="What went well?" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="challenges" className="font-semibold">Challenges</Label>
+                                <Textarea id="challenges" {...register("challenges")} rows={3} className="resize-none" placeholder="Any issues?" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="prayer_requests" className="font-semibold">Prayer Requests</Label>
+                                <Textarea id="prayer_requests" {...register("prayer_requests")} rows={3} className="resize-none" placeholder="How can we pray?" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="upcoming_events" className="font-semibold">Upcoming Events</Label>
+                                <Textarea id="upcoming_events" {...register("upcoming_events")} rows={3} className="resize-none" placeholder="What's next?" />
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="flex justify-end gap-4">
-                <Button type="button" variant="outline" onClick={() => reset()}>
+            <div className="flex justify-end gap-4 p-4 bg-muted/30 rounded-lg">
+                <Button type="button" variant="outline" size="lg" onClick={() => reset()}>
                     Reset Form
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} size="lg" className="px-8">
                     {loading ? "Submitting..." : "Submit Weekly Report"}
                 </Button>
             </div>
