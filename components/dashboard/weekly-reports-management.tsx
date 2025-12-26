@@ -451,6 +451,7 @@ export function WeeklyReportsManagement() {
                             </div>
                           </DialogContent>
                         </Dialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
