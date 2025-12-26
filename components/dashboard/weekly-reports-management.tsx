@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { DollarSign, TrendingUp, Users, Eye, CheckCircle, XCircle, FileText, Plus } from "lucide-react"
+import { DollarSign, TrendingUp, Users, Eye, CheckCircle, XCircle, FileText, Plus, Lightbulb, Zap, HelpCircle, Calendar } from "lucide-react"
 
 import { useChurch } from "@/components/providers/church-context"
 import { apiClient } from "@/lib/api-client"
@@ -236,8 +236,8 @@ export function WeeklyReportsManagement() {
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                               {/* Income Details */}
                               <div className="space-y-4">
-                                <h4 className="font-bold text-lg text-green-700 flex items-center gap-2 border-b pb-1">
-                                  <DollarSign className="w-5 h-5" /> Detailed Income
+                                <h4 className="font-bold text-lg flex items-center gap-2 border-b pb-2 mb-4">
+                                  <DollarSign className="w-5 h-5 text-green-500" /> Detailed Income
                                 </h4>
                                 <div className="space-y-3">
                                   {[
@@ -257,8 +257,8 @@ export function WeeklyReportsManagement() {
 
                               {/* Expense Details */}
                               <div className="space-y-4">
-                                <h4 className="font-bold text-lg text-red-700 flex items-center gap-2 border-b pb-1">
-                                  <TrendingUp className="w-5 h-5" /> Detailed Expenses
+                                <h4 className="font-bold text-lg flex items-center gap-2 border-b pb-2 mb-4">
+                                  <TrendingUp className="w-5 h-5 text-red-500" /> Detailed Expenses
                                 </h4>
                                 <div className="space-y-3">
                                   {[
@@ -287,8 +287,8 @@ export function WeeklyReportsManagement() {
 
                               {/* Attendance & Ministry stats */}
                               <div className="space-y-4">
-                                <h4 className="font-bold text-lg text-blue-700 flex items-center gap-2 border-b pb-1">
-                                  <Users className="w-5 h-5" /> Service & Ministry
+                                <h4 className="font-bold text-lg flex items-center gap-2 border-b pb-2 mb-4">
+                                  <Users className="w-5 h-5 text-blue-500" /> Service & Ministry
                                 </h4>
                                 <div className="space-y-6">
                                   <div className="space-y-2">
@@ -328,28 +328,36 @@ export function WeeklyReportsManagement() {
                             </div>
 
                             {/* Narratives Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-xl bg-primary/5 border border-primary/10">
-                              <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-primary">Highlights</Label>
-                                <div className="bg-white p-4 rounded-lg border text-sm min-h-[80px]">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-xl bg-card border border-border">
+                              <div className="space-y-4">
+                                <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                  <Lightbulb className="w-4 h-4 text-yellow-500" /> Highlights
+                                </h4>
+                                <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
                                   {report.highlights || "No highlights reported."}
                                 </div>
                               </div>
-                              <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-primary">Challenges</Label>
-                                <div className="bg-white p-4 rounded-lg border text-sm min-h-[80px]">
+                              <div className="space-y-4">
+                                <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                  <Zap className="w-4 h-4 text-purple-500" /> Challenges
+                                </h4>
+                                <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
                                   {report.challenges || "No challenges reported."}
                                 </div>
                               </div>
-                              <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-primary">Prayer Requests</Label>
-                                <div className="bg-white p-4 rounded-lg border text-sm min-h-[80px]">
+                              <div className="space-y-4">
+                                <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                  <HelpCircle className="w-4 h-4 text-blue-500" /> Prayer Requests
+                                </h4>
+                                <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
                                   {report.prayer_requests || "No prayer requests reported."}
                                 </div>
                               </div>
-                              <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-primary">Upcoming Events</Label>
-                                <div className="bg-white p-4 rounded-lg border text-sm min-h-[80px]">
+                              <div className="space-y-4">
+                                <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                  <Calendar className="w-4 h-4 text-primary" /> Upcoming Events
+                                </h4>
+                                <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
                                   {report.upcoming_events || "No upcoming events reported."}
                                 </div>
                               </div>

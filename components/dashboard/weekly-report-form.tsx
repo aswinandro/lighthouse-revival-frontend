@@ -11,6 +11,7 @@ import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { Alert } from "@/components/ui/alert"
 import { useChurch } from "@/components/providers/church-context"
+import { Calendar, DollarSign, TrendingUp, Users, ClipboardList, Lightbulb, Zap, HelpCircle } from "lucide-react"
 
 interface WeeklyReportFormProps {
     onSuccess?: () => void
@@ -118,7 +119,8 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
             {/* Header: Report Period */}
             <Card className="border-primary/20 shadow-sm">
                 <CardHeader className="pb-3 px-6 pt-6">
-                    <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
+                    <CardTitle className="text-xl font-bold flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-primary" />
                         Report Period
                     </CardTitle>
                 </CardHeader>
@@ -141,9 +143,12 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
                 {/* Financial Summary card (Integrated Income & Expenses if needed, but let's keep separate cards in a 3-column setup) */}
 
                 {/* Income Section */}
-                <Card className="shadow-sm h-full">
-                    <CardHeader className="bg-green-50/50 border-b border-green-100 mb-4">
-                        <CardTitle className="text-lg font-bold text-green-700">Income (AED)</CardTitle>
+                <Card className="shadow-sm h-full border-none bg-card/50 backdrop-blur-sm">
+                    <CardHeader className="border-b pb-4 mb-4">
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                            <DollarSign className="w-5 h-5 text-green-500" />
+                            Income (AED)
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -172,9 +177,12 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
                 </Card>
 
                 {/* Expenses Section */}
-                <Card className="lg:col-span-2 shadow-sm h-full">
-                    <CardHeader className="bg-red-50/50 border-b border-red-100 mb-4">
-                        <CardTitle className="text-lg font-bold text-red-700">Expenses (AED)</CardTitle>
+                <Card className="lg:col-span-2 shadow-sm h-full border-none bg-card/50 backdrop-blur-sm">
+                    <CardHeader className="border-b pb-4 mb-4">
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5 text-red-500" />
+                            Expenses (AED)
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-6 gap-y-4">
@@ -219,9 +227,12 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
                 </Card>
 
                 {/* Attendance Section */}
-                <Card className="shadow-sm">
-                    <CardHeader className="bg-blue-50/50 border-b border-blue-100 mb-4">
-                        <CardTitle className="text-lg font-bold text-blue-700">Attendance</CardTitle>
+                <Card className="shadow-sm border-none bg-card/50 backdrop-blur-sm">
+                    <CardHeader className="border-b pb-4 mb-4">
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                            <Users className="w-5 h-5 text-blue-500" />
+                            Attendance
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -250,9 +261,12 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
                 </Card>
 
                 {/* Ministry Statistics */}
-                <Card className="lg:col-span-2 shadow-sm">
-                    <CardHeader className="bg-purple-50/50 border-b border-purple-100 mb-4">
-                        <CardTitle className="text-lg font-bold text-purple-700">Ministry Statistics</CardTitle>
+                <Card className="lg:col-span-2 shadow-sm border-none bg-card/50 backdrop-blur-sm">
+                    <CardHeader className="border-b pb-4 mb-4">
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                            <Zap className="w-5 h-5 text-purple-500" />
+                            Ministry Statistics
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -289,9 +303,12 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
                 </Card>
 
                 {/* Notes Section - Pulling into a 3 column layout for desktop */}
-                <Card className="lg:col-span-3 shadow-sm border-t-4 border-t-primary">
-                    <CardHeader>
-                        <CardTitle className="text-lg font-bold">Additional Information</CardTitle>
+                <Card className="lg:col-span-3 shadow-sm border-none bg-card/50 backdrop-blur-sm">
+                    <CardHeader className="border-b pb-4 mb-4">
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                            <ClipboardList className="w-5 h-5 text-primary" />
+                            Additional Information & Narratives
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
