@@ -17,7 +17,7 @@ import { useEffect } from "react"
 import { useChurch } from "@/components/providers/church-context"
 
 export function PrayerRequestsManagement() {
-  const { selectedChurch } = useChurch()
+  const { selectedChurch, userRole } = useChurch()
   const [prayerRequests, setPrayerRequests] = useState<any[]>([])
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -62,7 +62,9 @@ export function PrayerRequestsManagement() {
 
   useEffect(() => {
     fetchRequests()
-    fetchMembers()
+    if (userRole === 'super_admin' || userRole === 'church_pastor') {
+      fetchMembers()
+    }
   }, [selectedChurch])
 
   const handleUpdateStatus = async (id: string, status: string) => {
@@ -101,7 +103,7 @@ export function PrayerRequestsManagement() {
       const user = JSON.parse(localStorage.getItem("user") || "{}")
       const payload = {
         ...newRequest,
-        name: user.firstName + " " + user.lastName,
+        name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || 'Anonymous',
         email: user.email,
         phone: user.phone || "",
         church_id: selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
@@ -164,13 +166,17 @@ export function PrayerRequestsManagement() {
     }
   }
 
+  const isAdmin = userRole === 'super_admin' || userRole === 'church_pastor'
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">Prayer Requests</h2>
-          <p className="text-muted-foreground">Manage and respond to prayer requests from the community</p>
+          <p className="text-muted-foreground">
+            {isAdmin ? 'Manage and respond to prayer requests from the community' : 'Submit and view your prayer requests'}
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Dialog open={newRequestOpen} onOpenChange={setNewRequestOpen}>
@@ -315,7 +321,7 @@ export function PrayerRequestsManagement() {
                   <TableHead>Subject</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Assigned To</TableHead>
+                  {isAdmin && <TableHead>Assigned To</TableHead>}
                   <TableHead>Submitted</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -344,7 +350,7 @@ export function PrayerRequestsManagement() {
                     <TableCell>
                       <Badge className={getStatusColor(request.status)}>{request.status}</Badge>
                     </TableCell>
-                    <TableCell className="text-sm">{request.assignedTo}</TableCell>
+                    {isAdmin && <TableCell className="text-sm">{request.assignedTo}</TableCell>}
                     <TableCell className="text-sm">{request.submittedAt}</TableCell>
                     <TableCell>
                       <Dialog>
@@ -399,61 +405,67 @@ export function PrayerRequestsManagement() {
                                   {selectedRequest.message}
                                 </p>
                               </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="text-sm font-medium">Assigned To</label>
-                                  <Select
-                                    value={selectedRequest.assignedTo}
-                                    onValueChange={(value) => handleAssign(selectedRequest.id, value)}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="Unassigned">Unassigned</SelectItem>
-                                      {members.map(member => (
-                                        <SelectItem key={member.id} value={member.id}>
-                                          {member.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                              {isAdmin && (
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="text-sm font-medium">Assigned To</label>
+                                    <Select
+                                      value={selectedRequest.assignedTo}
+                                      onValueChange={(value) => handleAssign(selectedRequest.id, value)}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="Unassigned">Unassigned</SelectItem>
+                                        {members.map(member => (
+                                          <SelectItem key={member.id} value={member.id}>
+                                            {member.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium">Status</label>
+                                    <Select
+                                      value={selectedRequest.status}
+                                      onValueChange={(value) => handleUpdateStatus(selectedRequest.id, value)}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="New">New</SelectItem>
+                                        <SelectItem value="In Progress">In Progress</SelectItem>
+                                        <SelectItem value="Follow-up">Follow-up</SelectItem>
+                                        <SelectItem value="Completed">Completed</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
                                 </div>
-                                <div>
-                                  <label className="text-sm font-medium">Status</label>
-                                  <Select
-                                    value={selectedRequest.status}
-                                    onValueChange={(value) => handleUpdateStatus(selectedRequest.id, value)}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="New">New</SelectItem>
-                                      <SelectItem value="In Progress">In Progress</SelectItem>
-                                      <SelectItem value="Follow-up">Follow-up</SelectItem>
-                                      <SelectItem value="Completed">Completed</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Response Notes</label>
-                                <Textarea
-                                  placeholder="Add notes about follow-up actions or prayer responses..."
-                                  className="mt-1"
-                                />
-                              </div>
-                              <div className="flex gap-2 pt-4">
-                                <Button className="flex-1">
-                                  <Mail className="w-4 h-4 mr-2" />
-                                  Send Response
-                                </Button>
-                                <Button variant="outline" className="flex-1 bg-transparent">
-                                  <Phone className="w-4 h-4 mr-2" />
-                                  Schedule Call
-                                </Button>
-                              </div>
+                              )}
+                              {isAdmin && (
+                                <>
+                                  <div>
+                                    <label className="text-sm font-medium">Response Notes</label>
+                                    <Textarea
+                                      placeholder="Add notes about follow-up actions or prayer responses..."
+                                      className="mt-1"
+                                    />
+                                  </div>
+                                  <div className="flex gap-2 pt-4">
+                                    <Button className="flex-1">
+                                      <Mail className="w-4 h-4 mr-2" />
+                                      Send Response
+                                    </Button>
+                                    <Button variant="outline" className="flex-1 bg-transparent">
+                                      <Phone className="w-4 h-4 mr-2" />
+                                      Schedule Call
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           )}
                         </DialogContent>
