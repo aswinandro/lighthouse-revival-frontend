@@ -195,12 +195,19 @@ export function WeeklyReportsManagement() {
                     </TableCell>
                     <TableCell>
                       {report.reviewer ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{report.reviewer?.first_name ? `${report.reviewer.first_name} ${report.reviewer.last_name}` : 'Admin'}</span>
-                          {report.super_admin_feedback && (
-                            <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none px-1 h-5">
-                              <FileText className="w-3 h-3" />
-                            </Badge>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{report.reviewer?.first_name ? `${report.reviewer.first_name} ${report.reviewer.last_name}` : 'Admin'}</span>
+                            {report.super_admin_feedback && (
+                              <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none px-1 h-5">
+                                <FileText className="w-3 h-3" />
+                              </Badge>
+                            )}
+                          </div>
+                          {report.reviewed_at && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {new Date(report.reviewed_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                            </span>
                           )}
                         </div>
                       ) : (
@@ -208,230 +215,242 @@ export function WeeklyReportsManagement() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Eye className="w-4 h-4" />
+                      <div className="flex justify-end gap-2">
+                        {userRole === "super_admin" && report.status === "Submitted" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleReview(report.id, 'Approved')}
+                            disabled={reviewLoading}
+                          >
+                            <CheckCircle className="w-4 h-4" />
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-[95vw] lg:max-w-6xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader className="mb-4">
-                            <div className="flex justify-between items-center pr-8">
-                              <DialogTitle className="text-2xl font-bold">
-                                Weekly Report: {new Date(report.report_week_start).toLocaleDateString()} - {new Date(report.report_week_end).toLocaleDateString()}
-                              </DialogTitle>
-                              <Badge variant="outline" className={`${getStatusColor(report.status)} px-3 py-1 text-sm`}>
-                                {report.status}
-                              </Badge>
-                            </div>
-                            <p className="text-muted-foreground">{report.church?.name} | Pastor {report.pastor?.first_name} {report.pastor?.last_name}</p>
-                          </DialogHeader>
+                        )}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-[95vw] lg:max-w-6xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader className="mb-4">
+                              <div className="flex justify-between items-center pr-8">
+                                <DialogTitle className="text-2xl font-bold">
+                                  Weekly Report: {new Date(report.report_week_start).toLocaleDateString()} - {new Date(report.report_week_end).toLocaleDateString()}
+                                </DialogTitle>
+                                <Badge variant="outline" className={`${getStatusColor(report.status)} px-3 py-1 text-sm`}>
+                                  {report.status}
+                                </Badge>
+                              </div>
+                              <p className="text-muted-foreground">{report.church?.name} | Pastor {report.pastor?.first_name} {report.pastor?.last_name}</p>
+                            </DialogHeader>
 
-                          <div className="space-y-8 py-4">
-                            {/* Summary Totals Row */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl bg-muted/40 border">
-                              <div className="space-y-1">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Total Income</Label>
-                                <p className="text-xl font-bold text-green-600">AED {Number(report.total_amount).toLocaleString()}</p>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Total Expenses</Label>
-                                <p className="text-xl font-bold text-red-600">AED {Number(report.total_expenses).toLocaleString()}</p>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Net Balance</Label>
-                                <p className="text-xl font-bold text-primary">AED {Number(report.net_balance).toLocaleString()}</p>
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Total Attendance</Label>
-                                <p className="text-xl font-bold">{report.total_attendance}</p>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                              {/* Income Details */}
-                              <div className="space-y-4">
-                                <h4 className="font-bold text-lg flex items-center gap-2 border-b pb-2 mb-4">
-                                  <DollarSign className="w-5 h-5 text-green-500" /> Detailed Income
-                                </h4>
-                                <div className="space-y-3">
-                                  {[
-                                    { label: 'Tithes', val: report.tithe_amount },
-                                    { label: 'General Offering', val: report.offering_amount },
-                                    { label: 'Special Offering', val: report.special_offering_amount },
-                                    { label: 'Donations', val: report.donations_amount },
-                                    { label: 'Other Income', val: report.other_income },
-                                  ].map((item, i) => (
-                                    <div key={i} className="flex justify-between items-center py-1 border-b border-dashed border-muted">
-                                      <span className="text-sm font-medium">{item.label}</span>
-                                      <span className="font-semibold text-green-600">AED {Number(item.val || 0).toLocaleString()}</span>
-                                    </div>
-                                  ))}
+                            <div className="space-y-8 py-4">
+                              {/* Summary Totals Row */}
+                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl bg-muted/40 border">
+                                <div className="space-y-1">
+                                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Total Income</Label>
+                                  <p className="text-xl font-bold text-green-600">AED {Number(report.total_amount).toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Total Expenses</Label>
+                                  <p className="text-xl font-bold text-red-600">AED {Number(report.total_expenses).toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Net Balance</Label>
+                                  <p className="text-xl font-bold text-primary">AED {Number(report.net_balance).toLocaleString()}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-xs uppercase tracking-wider text-muted-foreground">Total Attendance</Label>
+                                  <p className="text-xl font-bold">{report.total_attendance}</p>
                                 </div>
                               </div>
 
-                              {/* Expense Details */}
-                              <div className="space-y-4">
-                                <h4 className="font-bold text-lg flex items-center gap-2 border-b pb-2 mb-4">
-                                  <TrendingUp className="w-5 h-5 text-red-500" /> Detailed Expenses
-                                </h4>
-                                <div className="space-y-3">
-                                  {[
-                                    { label: 'Rent', val: report.rent_expense },
-                                    { label: 'Utilities', val: report.utilities_expense },
-                                    { label: 'Ministry', val: report.ministry_expense },
-                                    { label: 'Transportation', val: report.transportation_expense },
-                                    { label: 'Maintenance', val: report.maintenance_expense },
-                                    { label: 'Staff', val: report.staff_expense },
-                                    { label: 'Outreach', val: report.outreach_expense },
-                                    { label: 'Other', val: report.other_expenses },
-                                  ].map((item, i) => (
-                                    <div key={i} className="flex justify-between items-center py-1 border-b border-dashed border-muted">
-                                      <span className="text-sm font-medium">{item.label}</span>
-                                      <span className="font-semibold text-red-600">AED {Number(item.val || 0).toLocaleString()}</span>
-                                    </div>
-                                  ))}
-                                  {report.expense_notes && (
-                                    <div className="p-3 rounded-lg bg-red-50/50 border border-red-100 mt-2">
-                                      <p className="text-xs font-bold text-red-800 uppercase mb-1">Expense Notes</p>
-                                      <p className="text-sm italic">"{report.expense_notes}"</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Attendance & Ministry stats */}
-                              <div className="space-y-4">
-                                <h4 className="font-bold text-lg flex items-center gap-2 border-b pb-2 mb-4">
-                                  <Users className="w-5 h-5 text-blue-500" /> Service & Ministry
-                                </h4>
-                                <div className="space-y-6">
-                                  <div className="space-y-2">
-                                    <p className="text-xs font-bold uppercase text-muted-foreground border-b pb-1 mb-2">Service Attendance</p>
+                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Income Details */}
+                                <div className="space-y-4">
+                                  <h4 className="font-bold text-lg flex items-center gap-2 border-b pb-2 mb-4">
+                                    <DollarSign className="w-5 h-5 text-green-500" /> Detailed Income
+                                  </h4>
+                                  <div className="space-y-3">
                                     {[
-                                      { label: 'Sunday', val: report.sunday_service_attendance },
-                                      { label: 'Midweek', val: report.midweek_service_attendance },
-                                      { label: 'Prayer Meeting', val: report.prayer_meeting_attendance },
-                                      { label: 'Youth', val: report.youth_service_attendance },
-                                      { label: 'Children', val: report.children_service_attendance },
+                                      { label: 'Tithes', val: report.tithe_amount },
+                                      { label: 'General Offering', val: report.offering_amount },
+                                      { label: 'Special Offering', val: report.special_offering_amount },
+                                      { label: 'Donations', val: report.donations_amount },
+                                      { label: 'Other Income', val: report.other_income },
                                     ].map((item, i) => (
                                       <div key={i} className="flex justify-between items-center py-1 border-b border-dashed border-muted">
                                         <span className="text-sm font-medium">{item.label}</span>
-                                        <span className="font-semibold">{item.val || 0}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                  <div className="space-y-2">
-                                    <p className="text-xs font-bold uppercase text-muted-foreground border-b pb-1 mb-2">Ministry Stats</p>
-                                    {[
-                                      { label: 'New Converts', val: report.new_converts },
-                                      { label: 'New Members', val: report.new_members },
-                                      { label: 'Water Baptisms', val: report.water_baptisms },
-                                      { label: 'Spirit Baptisms', val: report.spirit_baptisms },
-                                      { label: 'Home Visits', val: report.home_visits },
-                                      { label: 'Hospital Visits', val: report.hospital_visits },
-                                      { label: 'Counseling', val: report.counseling_sessions },
-                                    ].map((item, i) => (
-                                      <div key={i} className="flex justify-between items-center py-1 border-b border-dashed border-muted">
-                                        <span className="text-sm font-medium">{item.label}</span>
-                                        <span className="font-semibold">{item.val || 0}</span>
+                                        <span className="font-semibold text-green-600">AED {Number(item.val || 0).toLocaleString()}</span>
                                       </div>
                                     ))}
                                   </div>
                                 </div>
+
+                                {/* Expense Details */}
+                                <div className="space-y-4">
+                                  <h4 className="font-bold text-lg flex items-center gap-2 border-b pb-2 mb-4">
+                                    <TrendingUp className="w-5 h-5 text-red-500" /> Detailed Expenses
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {[
+                                      { label: 'Rent', val: report.rent_expense },
+                                      { label: 'Utilities', val: report.utilities_expense },
+                                      { label: 'Ministry', val: report.ministry_expense },
+                                      { label: 'Transportation', val: report.transportation_expense },
+                                      { label: 'Maintenance', val: report.maintenance_expense },
+                                      { label: 'Staff', val: report.staff_expense },
+                                      { label: 'Outreach', val: report.outreach_expense },
+                                      { label: 'Other', val: report.other_expenses },
+                                    ].map((item, i) => (
+                                      <div key={i} className="flex justify-between items-center py-1 border-b border-dashed border-muted">
+                                        <span className="text-sm font-medium">{item.label}</span>
+                                        <span className="font-semibold text-red-600">AED {Number(item.val || 0).toLocaleString()}</span>
+                                      </div>
+                                    ))}
+                                    {report.expense_notes && (
+                                      <div className="p-3 rounded-lg bg-red-50/50 border border-red-100 mt-2">
+                                        <p className="text-xs font-bold text-red-800 uppercase mb-1">Expense Notes</p>
+                                        <p className="text-sm italic">"{report.expense_notes}"</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Attendance & Ministry stats */}
+                                <div className="space-y-4">
+                                  <h4 className="font-bold text-lg flex items-center gap-2 border-b pb-2 mb-4">
+                                    <Users className="w-5 h-5 text-blue-500" /> Service & Ministry
+                                  </h4>
+                                  <div className="space-y-6">
+                                    <div className="space-y-2">
+                                      <p className="text-xs font-bold uppercase text-muted-foreground border-b pb-1 mb-2">Service Attendance</p>
+                                      {[
+                                        { label: 'Sunday', val: report.sunday_service_attendance },
+                                        { label: 'Midweek', val: report.midweek_service_attendance },
+                                        { label: 'Prayer Meeting', val: report.prayer_meeting_attendance },
+                                        { label: 'Youth', val: report.youth_service_attendance },
+                                        { label: 'Children', val: report.children_service_attendance },
+                                      ].map((item, i) => (
+                                        <div key={i} className="flex justify-between items-center py-1 border-b border-dashed border-muted">
+                                          <span className="text-sm font-medium">{item.label}</span>
+                                          <span className="font-semibold">{item.val || 0}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div className="space-y-2">
+                                      <p className="text-xs font-bold uppercase text-muted-foreground border-b pb-1 mb-2">Ministry Stats</p>
+                                      {[
+                                        { label: 'New Converts', val: report.new_converts },
+                                        { label: 'New Members', val: report.new_members },
+                                        { label: 'Water Baptisms', val: report.water_baptisms },
+                                        { label: 'Spirit Baptisms', val: report.spirit_baptisms },
+                                        { label: 'Home Visits', val: report.home_visits },
+                                        { label: 'Hospital Visits', val: report.hospital_visits },
+                                        { label: 'Counseling', val: report.counseling_sessions },
+                                      ].map((item, i) => (
+                                        <div key={i} className="flex justify-between items-center py-1 border-b border-dashed border-muted">
+                                          <span className="text-sm font-medium">{item.label}</span>
+                                          <span className="font-semibold">{item.val || 0}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
+
+                              {/* Narratives Section */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-xl bg-card border border-border">
+                                <div className="space-y-4">
+                                  <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <Lightbulb className="w-4 h-4 text-yellow-500" /> Highlights
+                                  </h4>
+                                  <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
+                                    {report.highlights || "No highlights reported."}
+                                  </div>
+                                </div>
+                                <div className="space-y-4">
+                                  <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <Zap className="w-4 h-4 text-purple-500" /> Challenges
+                                  </h4>
+                                  <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
+                                    {report.challenges || "No challenges reported."}
+                                  </div>
+                                </div>
+                                <div className="space-y-4">
+                                  <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <HelpCircle className="w-4 h-4 text-blue-500" /> Prayer Requests
+                                  </h4>
+                                  <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
+                                    {report.prayer_requests || "No prayer requests reported."}
+                                  </div>
+                                </div>
+                                <div className="space-y-4">
+                                  <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-primary" /> Upcoming Events
+                                  </h4>
+                                  <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
+                                    {report.upcoming_events || "No upcoming events reported."}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Feedback Section (Visible to everyone if feedback exists) */}
+                              {report.super_admin_feedback && (
+                                <div className="p-6 rounded-xl bg-orange-50/50 border border-orange-200">
+                                  <h4 className="font-bold text-orange-800 flex items-center gap-2 mb-2 uppercase text-sm">
+                                    <FileText className="w-4 h-4" /> Super Admin Feedback
+                                  </h4>
+                                  <p className="text-sm italic text-orange-950">"{report.super_admin_feedback}"</p>
+                                  <div className="mt-4 flex gap-4 text-xs text-orange-700 font-medium">
+                                    <span>Reviewed by: {report.reviewer?.first_name ? `${report.reviewer.first_name} ${report.reviewer.last_name}` : 'Super Admin'}</span>
+                                    <span>Date: {report.reviewed_at ? new Date(report.reviewed_at).toLocaleString() : 'N/A'}</span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Review Actions (Super Admin Only) */}
+                              {userRole === "super_admin" && report.status === "Submitted" && (
+                                <div className="space-y-4 pt-6 border-t">
+                                  <h3 className="font-bold text-xl flex items-center gap-2">
+                                    <CheckCircle className="w-6 h-6 text-primary" /> Review This Report
+                                  </h3>
+                                  <div className="space-y-2">
+                                    <Label className="font-semibold text-muted-foreground">Feedback for Pastor</Label>
+                                    <Textarea
+                                      placeholder="Add any instructions, feedback or questions for the pastor..."
+                                      className="resize-none"
+                                      rows={3}
+                                      value={feedback}
+                                      onChange={(e) => setFeedback(e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="flex gap-4">
+                                    <Button
+                                      className="flex-1 h-12 gap-2 text-lg shadow-lg hover:shadow-green-500/20"
+                                      onClick={() => handleReview(report.id, 'Approved')}
+                                      disabled={reviewLoading}
+                                    >
+                                      <CheckCircle className="w-5 h-5" />
+                                      Approve & Finalize
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      className="flex-1 h-12 gap-2 text-lg border-red-200 text-red-600 hover:bg-red-50 shadow-sm"
+                                      onClick={() => handleReview(report.id, 'Rejected')}
+                                      disabled={reviewLoading}
+                                    >
+                                      <XCircle className="w-5 h-5" />
+                                      Reject & Request Changes
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-
-                            {/* Narratives Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-xl bg-card border border-border">
-                              <div className="space-y-4">
-                                <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                  <Lightbulb className="w-4 h-4 text-yellow-500" /> Highlights
-                                </h4>
-                                <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
-                                  {report.highlights || "No highlights reported."}
-                                </div>
-                              </div>
-                              <div className="space-y-4">
-                                <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                  <Zap className="w-4 h-4 text-purple-500" /> Challenges
-                                </h4>
-                                <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
-                                  {report.challenges || "No challenges reported."}
-                                </div>
-                              </div>
-                              <div className="space-y-4">
-                                <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                  <HelpCircle className="w-4 h-4 text-blue-500" /> Prayer Requests
-                                </h4>
-                                <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
-                                  {report.prayer_requests || "No prayer requests reported."}
-                                </div>
-                              </div>
-                              <div className="space-y-4">
-                                <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                  <Calendar className="w-4 h-4 text-primary" /> Upcoming Events
-                                </h4>
-                                <div className="p-4 rounded-lg bg-muted/30 border border-border text-sm min-h-[80px] leading-relaxed">
-                                  {report.upcoming_events || "No upcoming events reported."}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Feedback Section (Visible to everyone if feedback exists) */}
-                            {report.super_admin_feedback && (
-                              <div className="p-6 rounded-xl bg-orange-50/50 border border-orange-200">
-                                <h4 className="font-bold text-orange-800 flex items-center gap-2 mb-2 uppercase text-sm">
-                                  <FileText className="w-4 h-4" /> Super Admin Feedback
-                                </h4>
-                                <p className="text-sm italic text-orange-950">"{report.super_admin_feedback}"</p>
-                                <div className="mt-4 flex gap-4 text-xs text-orange-700 font-medium">
-                                  <span>Reviewed by: {report.reviewer?.first_name ? `${report.reviewer.first_name} ${report.reviewer.last_name}` : 'Super Admin'}</span>
-                                  <span>Date: {report.reviewed_at ? new Date(report.reviewed_at).toLocaleDateString() : 'N/A'}</span>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Review Actions (Super Admin Only) */}
-                            {userRole === "super_admin" && report.status === "Submitted" && (
-                              <div className="space-y-4 pt-6 border-t">
-                                <h3 className="font-bold text-xl flex items-center gap-2">
-                                  <CheckCircle className="w-6 h-6 text-primary" /> Review This Report
-                                </h3>
-                                <div className="space-y-2">
-                                  <Label className="font-semibold text-muted-foreground">Feedback for Pastor</Label>
-                                  <Textarea
-                                    placeholder="Add any instructions, feedback or questions for the pastor..."
-                                    className="resize-none"
-                                    rows={3}
-                                    value={feedback}
-                                    onChange={(e) => setFeedback(e.target.value)}
-                                  />
-                                </div>
-                                <div className="flex gap-4">
-                                  <Button
-                                    className="flex-1 h-12 gap-2 text-lg shadow-lg hover:shadow-green-500/20"
-                                    onClick={() => handleReview(report.id, 'Approved')}
-                                    disabled={reviewLoading}
-                                  >
-                                    <CheckCircle className="w-5 h-5" />
-                                    Approve & Finalize
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    className="flex-1 h-12 gap-2 text-lg border-red-200 text-red-600 hover:bg-red-50 shadow-sm"
-                                    onClick={() => handleReview(report.id, 'Rejected')}
-                                    disabled={reviewLoading}
-                                  >
-                                    <XCircle className="w-5 h-5" />
-                                    Reject & Request Changes
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                          </DialogContent>
+                        </Dialog>
                     </TableCell>
                   </TableRow>
                 ))
