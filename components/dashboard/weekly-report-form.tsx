@@ -98,7 +98,7 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
                 new_members: parseInt(data.new_members),
             }
 
-            await apiClient.createWeeklyReport(token, reportData)
+            await apiClient.createWeeklyReport(reportData, token)
             setSuccess(true)
             reset()
             if (onSuccess) onSuccess()
