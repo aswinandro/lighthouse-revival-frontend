@@ -421,10 +421,10 @@ export function QRAttendanceManagement() {
                                 <CardContent className="p-0">
                                     <div className="p-6 space-y-4">
                                         <div className="flex items-center justify-center p-4 bg-white/5 rounded-xl border border-white/5 group-hover:bg-white/10 transition-colors">
-                                            {session.qrCodeImage && (
+                                            {(session.qrCodeImage || session.qr_image_url) && (
                                                 <div className="relative w-40 h-40 group-hover:scale-105 transition-transform duration-500">
                                                     <img
-                                                        src={session.qrCodeImage}
+                                                        src={session.qrCodeImage || session.qr_image_url}
                                                         alt="QR Code"
                                                         className="w-full h-full rounded-lg mix-blend-screen opacity-90 group-hover:opacity-100"
                                                     />
