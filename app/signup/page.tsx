@@ -23,7 +23,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
 import { PhoneInput } from "@/components/ui/phone-input"
@@ -59,7 +58,15 @@ export default function SignupPage() {
   const [churches, setChurches] = useState<any[]>([])
 
   // Member detection state
-  const [foundMember, setFoundMember] = useState<{ firstName: string; lastName: string; churchId: string; email: string } | null>(null)
+  const [foundMember, setFoundMember] = useState<{
+    firstName: string;
+    lastName: string;
+    churchId: string;
+    email: string;
+    churchName?: string;
+    city?: string;
+    country?: string;
+  } | null>(null)
 
   useEffect(() => {
     const loadChurches = async () => {
