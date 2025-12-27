@@ -78,6 +78,13 @@ class ApiClient {
     })
   }
 
+  async checkUserStatus(phone: string) {
+    return this.request("/auth/check-status", {
+      method: "POST",
+      body: JSON.stringify({ phone }),
+    })
+  }
+
   async getCurrentUser(token: string) {
     return this.request("/auth/me", { token })
   }
