@@ -70,7 +70,7 @@ export function QRAttendanceManagement() {
                 })
                 return
             }
-            await apiClient.createQRSession({ ...newSession, churchId: selectedChurch.id }, token)
+            await apiClient.createQrSession({ ...newSession, churchId: selectedChurch.id }, token)
             toast({
                 title: "Success",
                 description: "QR session created successfully",
