@@ -106,20 +106,20 @@ function QRScanContent() {
 
   // RENDER STATES
   if (viewState === 'loading') {
-    return <div className="h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+    return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
   }
 
   if (viewState === 'error') {
     return (
-      <div className="h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-red-200 bg-red-50">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background text-foreground">
+        <Card className="w-full max-w-md border-destructive/20 bg-destructive/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-700">
+            <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertCircle className="w-6 h-6" /> Error
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-red-600">{errorMsg}</p>
+            <p className="text-destructive font-medium">{errorMsg}</p>
           </CardContent>
         </Card>
       </div>
@@ -128,20 +128,30 @@ function QRScanContent() {
 
   if (viewState === 'success') {
     return (
-      <div className="h-screen flex items-center justify-center p-4 bg-green-50/30">
-        <Card className="w-full max-w-md border-green-200 shadow-lg">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-10 h-10 text-green-600" />
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <Card className="w-full max-w-md border-primary/20 shadow-2xl bg-card">
+          <CardHeader className="text-center pb-6">
+            <div className="mx-auto w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-300">
+              <CheckCircle className="w-10 h-10 text-primary" />
             </div>
-            <CardTitle className="text-2xl text-green-800">Checked In!</CardTitle>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Checked In!
+            </CardTitle>
           </CardHeader>
-          <CardContent className="text-center space-y-4">
-            <p className="text-lg font-medium">{successMsg}</p>
-            <p className="text-sm text-muted-foreground">Session: {session?.session_name}</p>
+          <CardContent className="text-center space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold text-foreground">Welcome, {userName}!</h3>
+              <p className="text-muted-foreground">{successMsg}</p>
+            </div>
+            <div className="p-4 rounded-lg bg-muted/50 border border-muted">
+              <p className="text-sm font-medium text-foreground">{session?.church?.name}</p>
+              <p className="text-xs text-muted-foreground mt-1">{session?.session_name}</p>
+            </div>
           </CardContent>
-          <CardFooter className="justify-center">
-            <Button variant="outline" onClick={() => window.location.reload()}>Scan Another</Button>
+          <CardFooter className="justify-center pt-4">
+            <Button variant="outline" className="w-full" onClick={() => window.location.reload()}>
+              Check In Another Person
+            </Button>
           </CardFooter>
         </Card>
       </div>
@@ -150,71 +160,71 @@ function QRScanContent() {
 
   if (viewState === 'onboarding') {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50">
-        <Card className="w-full max-w-lg shadow-xl">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="w-6 h-6 text-primary" /> New Registration
-            </CardTitle>
-            <CardDescription>
-              We couldn't find your number ({phone}). Please fill in your details to check in.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <OnboardingForm
-              phone={phone}
-              onSubmit={handleOnboardingComplete}
-              onCancel={() => setViewState('phone-entry')}
-            />
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background py-10">
+        <div className="w-full max-w-lg space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome!</h1>
+            <p className="text-muted-foreground">Complete your profile to join the family.</p>
+          </div>
+
+          <OnboardingForm
+            phone={phone}
+            onSubmit={handleOnboardingComplete}
+            onCancel={() => setViewState('phone-entry')}
+          />
+        </div>
       </div>
     )
   }
 
   // Default: Phone Entry
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-            <LogIn className="w-6 h-6 text-primary" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background text-foreground">
+      <Card className="w-full max-w-md shadow-2xl border-border bg-card">
+        <CardHeader className="text-center space-y-6 pt-10">
+          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center animate-pulse">
+            <LogIn className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-2xl">{session?.church?.name}</CardTitle>
-            <CardDescription className="text-base mt-1">{session?.session_name}</CardDescription>
+            <CardTitle className="text-3xl font-bold tracking-tight">{session?.church?.name}</CardTitle>
+            <CardDescription className="text-lg mt-2 font-medium text-primary">
+              {session?.session_name}
+            </CardDescription>
           </div>
-          <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-muted text-xs font-medium">
+          <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-muted text-sm font-medium text-muted-foreground">
             {session?.session_date} • {session?.session_time}
           </div>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handlePhoneSubmit} className="space-y-4">
+        <CardContent className="pb-10 pt-6">
+          <form onSubmit={handlePhoneSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="phone">Mobile Number</Label>
+              <Label htmlFor="phone" className="text-base">Mobile Number</Label>
               <Input
                 id="phone"
                 type="tel"
                 placeholder="050 123 4567"
-                className="text-lg h-12"
+                className="text-lg h-14 bg-background"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 autoFocus
               />
             </div>
-            <Button type="submit" className="w-full h-12 text-lg" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Check In"}
+            <Button type="submit" className="w-full h-14 text-lg font-semibold shadow-lg hover:shadow-xl transition-all" disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Check In"}
             </Button>
           </form>
         </CardContent>
       </Card>
+      <div className="mt-8 text-center text-sm text-muted-foreground">
+        <p>Protected by Lighthouse Revival</p>
+      </div>
     </div>
   )
 }
 
 export default function QRScanPage() {
   return (
-    <Suspense fallback={<div className="h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-background"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
       <QRScanContent />
     </Suspense>
   )
