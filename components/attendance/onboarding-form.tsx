@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 const onboardingSchema = z.object({
     firstName: z.string().min(1, "First Name is required"),
@@ -144,7 +145,7 @@ export function OnboardingForm({ phone, onSubmit, onCancel }: OnboardingFormProp
                                     <FormItem>
                                         <FormLabel>Phone Number</FormLabel>
                                         <FormControl>
-                                            <Input {...field} disabled className="bg-muted text-muted-foreground" />
+                                            <PhoneInput {...field} value={field.value} onChange={field.onChange} className="bg-muted text-muted-foreground opacity-50 pointer-events-none" />
                                         </FormControl>
                                     </FormItem>
                                 )}
