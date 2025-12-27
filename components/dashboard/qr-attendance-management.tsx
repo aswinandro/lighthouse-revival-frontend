@@ -144,83 +144,145 @@ export function QRAttendanceManagement() {
 
     const handleDownloadFlyer = (session: any) => {
         const canvas = document.createElement("canvas")
-        canvas.width = 800
-        canvas.height = 1200
+        canvas.width = 1200 // Increased for higher quality
+        canvas.height = 1800
         const ctx = canvas.getContext("2d")
         if (!ctx) return
 
-        // Background
-        const gradient = ctx.createLinearGradient(0, 0, 0, 1200)
-        gradient.addColorStop(0, "#0f172a")
-        gradient.addColorStop(1, "#1e293b")
-        ctx.fillStyle = gradient
-        ctx.fillRect(0, 0, 800, 1200)
+        const W = canvas.width
+        const H = canvas.height
 
-        // Accent Circle
-        ctx.beginPath()
-        ctx.arc(400, 600, 300, 0, Math.PI * 2)
-        ctx.fillStyle = "rgba(59, 130, 246, 0.05)"
-        ctx.fill()
+        // 1. Deep Background
+        const bgGradient = ctx.createLinearGradient(0, 0, W, H)
+        bgGradient.addColorStop(0, "#020617") // Deep slate/black
+        bgGradient.addColorStop(0.5, "#0f172a") // Deep blue
+        bgGradient.addColorStop(1, "#1e1b4b") // Indigo
+        ctx.fillStyle = bgGradient
+        ctx.fillRect(0, 0, W, H)
 
-        // Border
-        ctx.strokeStyle = "rgba(59, 130, 246, 0.3)"
-        ctx.lineWidth = 20
-        ctx.strokeRect(40, 40, 720, 1120)
+        // 2. Artistic Background Elements (Lighthouse Glow)
+        const glow = ctx.createRadialGradient(W / 2, 200, 0, W / 2, 200, 800)
+        glow.addColorStop(0, "rgba(59, 130, 246, 0.15)")
+        glow.addColorStop(1, "rgba(59, 130, 246, 0)")
+        ctx.fillStyle = glow
+        ctx.fillRect(0, 0, W, H)
 
-        // Header
-        ctx.fillStyle = "#ffffff"
-        ctx.font = "bold 48px Inter, system-ui, sans-serif"
+        // Subtle Grid/Pattern
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.03)"
+        ctx.lineWidth = 1
+        for (let i = 0; i < W; i += 60) {
+            ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke();
+        }
+        for (let i = 0; i < H; i += 60) {
+            ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke();
+        }
+
+        // 3. Header Styling
         ctx.textAlign = "center"
-        ctx.fillText("Lighthouse Revival", 400, 150)
 
-        ctx.font = "32px Inter, system-ui, sans-serif"
-        ctx.fillStyle = "#94a3b8"
-        ctx.fillText("Church International", 400, 200)
-
-        // Session Title
+        // Lighthouse Icon (Simple Path)
         ctx.fillStyle = "#3b82f6"
-        ctx.font = "bold 64px Inter, system-ui, sans-serif"
-        const sessionName = session.session_name || session.sessionName || "Session"
-        ctx.fillText(sessionName.toUpperCase(), 400, 350)
-
-        // Details Wrap
-        ctx.fillStyle = "rgba(255, 255, 255, 0.05)"
-        ctx.roundRect?.(100, 420, 600, 180, 20)
+        ctx.beginPath()
+        ctx.moveTo(W / 2 - 20, 100)
+        ctx.lineTo(W / 2 + 20, 100)
+        ctx.lineTo(W / 2 + 30, 180)
+        ctx.lineTo(W / 2 - 30, 180)
+        ctx.closePath()
         ctx.fill()
 
-        ctx.font = "bold 32px Inter, system-ui, sans-serif"
+        // Main Title
         ctx.fillStyle = "#ffffff"
+        ctx.font = "bold 80px Inter, system-ui, sans-serif"
+        ctx.fillText("Lighthouse Revival", W / 2, 280)
+
+        ctx.font = "italic 40px Inter, system-ui, sans-serif"
+        ctx.fillStyle = "#94a3b8"
+        ctx.fillText("Church International", W / 2, 340)
+
+        // Gold Accent Line
+        const accentGrad = ctx.createLinearGradient(W / 2 - 200, 0, W / 2 + 200, 0)
+        accentGrad.addColorStop(0, "transparent")
+        accentGrad.addColorStop(0.5, "#3b82f6")
+        accentGrad.addColorStop(1, "transparent")
+        ctx.fillStyle = accentGrad
+        ctx.fillRect(W / 2 - 200, 380, 400, 4)
+
+        // 4. Session Content Card (Glassmorphism Effect)
+        function drawCard(x: number, y: number, w: number, h: number, r: number) {
+            ctx!.save()
+            ctx!.shadowColor = "rgba(0, 0, 0, 0.5)"
+            ctx!.shadowBlur = 40
+            ctx!.fillStyle = "rgba(255, 255, 255, 0.05)"
+            ctx!.beginPath()
+            ctx!.roundRect?.(x, y, w, h, r)
+            ctx!.fill()
+            ctx!.strokeStyle = "rgba(255, 255, 255, 0.1)"
+            ctx!.lineWidth = 2
+            ctx!.stroke()
+            ctx!.restore()
+        }
+
+        drawCard(100, 450, 1000, 400, 40)
+
+        // Session Name
+        const nameGrad = ctx.createLinearGradient(W / 2 - 400, 0, W / 2 + 400, 0)
+        nameGrad.addColorStop(0, "#60a5fa")
+        nameGrad.addColorStop(0.5, "#3b82f6")
+        nameGrad.addColorStop(1, "#2563eb")
+        ctx.fillStyle = nameGrad
+        ctx.font = "900 72px Inter, system-ui, sans-serif"
+        const sessionName = (session.session_name || session.sessionName || "Session").toUpperCase()
+        ctx.fillText(sessionName, W / 2, 560)
+
+        // DateTime Details
+        ctx.fillStyle = "#ffffff"
+        ctx.font = "500 48px Inter, system-ui, sans-serif"
         const sessionDate = session.session_date || session.sessionDate
         const sessionTime = session.session_time || session.sessionTime
-
         const dateStr = new Date(sessionDate).toLocaleDateString(undefined, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         })
-        ctx.fillText(dateStr, 400, 490)
-        ctx.fillText(`at ${sessionTime}`, 400, 550)
 
-        // Message
-        ctx.font = "bold 40px Inter, system-ui, sans-serif"
+        ctx.fillText(dateStr, W / 2, 660)
+
+        // Time Badge
+        ctx.fillStyle = "rgba(59, 130, 246, 0.15)"
+        ctx.roundRect?.(W / 2 - 150, 710, 300, 80, 40)
+        ctx.fill()
+        ctx.fillStyle = "#3b82f6"
+        ctx.font = "bold 44px Inter, system-ui, sans-serif"
+        ctx.fillText(sessionTime, W / 2, 765)
+
+        // 5. QR Code Section
         ctx.fillStyle = "#ffffff"
-        ctx.fillText("SCAN TO CHECK-IN", 400, 720)
+        ctx.font = "bold 56px Inter, system-ui, sans-serif"
+        ctx.fillText("SCAN TO ATTEND", W / 2, 980)
 
-        // QR Code
+        ctx.font = "400 32px Inter, system-ui, sans-serif"
+        ctx.fillStyle = "#94a3b8"
+        ctx.fillText("Point your camera at the code below", W / 2, 1040)
+
+        // QR Background
+        drawCard(300, 1120, 600, 600, 60)
+
+        // QR Code Image
         const qrImg = new Image()
         qrImg.crossOrigin = "anonymous"
         qrImg.onload = () => {
-            // Draw QR code
+            // White background for QR code itself to ensure scanability
             ctx.fillStyle = "#ffffff"
-            ctx.roundRect?.(200, 780, 400, 400, 30)
+            ctx.roundRect?.(340, 1160, 520, 520, 20)
             ctx.fill()
-            ctx.drawImage(qrImg, 220, 800, 360, 360)
 
-            // Footer
-            ctx.fillStyle = "#64748b"
-            ctx.font = "24px Inter, system-ui, sans-serif"
-            ctx.fillText("www.lighthouserevival.org", 400, 1160)
+            ctx.drawImage(qrImg, 360, 1180, 480, 480)
+
+            // 6. Footer
+            ctx.fillStyle = "rgba(255, 255, 255, 0.4)"
+            ctx.font = "600 32px Inter, system-ui, sans-serif"
+            ctx.fillText("www.lighthouserevival.com", W / 2, 1750)
 
             // Download
             const link = document.createElement("a")
