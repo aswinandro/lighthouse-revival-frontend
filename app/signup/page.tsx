@@ -100,8 +100,8 @@ export default function SignupPage() {
         if (data.type === "USER_EXISTS") {
           setError(data.message)
           setTimeout(() => router.push("/login"), 2000)
-        } else if (data.type === "MEMBER_FOUND") {
-          // Existing member found - allow them to claim account
+        } else if (data.type === "MEMBER_FOUND" || data.type === "NEWCOMER_FOUND") {
+          // Existing record found - allow them to claim account or complete reg
           setFoundMember(data.member)
           setFirstName(data.member.firstName)
           setLastName(data.member.lastName)
