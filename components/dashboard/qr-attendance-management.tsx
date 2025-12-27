@@ -20,6 +20,7 @@ export function QRAttendanceManagement() {
     const [sessions, setSessions] = useState<any[]>([])
     const [showCreateDialog, setShowCreateDialog] = useState(false)
     const [selectedSession, setSelectedSession] = useState<any>(null)
+    const [createdSession, setCreatedSession] = useState<any>(null)
     const [attendanceRecords, setAttendanceRecords] = useState<any[]>([])
     const { toast } = useToast()
 
@@ -70,12 +71,14 @@ export function QRAttendanceManagement() {
                 })
                 return
             }
-            await apiClient.createQrSession({ ...newSession, churchId: selectedChurch.id }, token)
+            const res: any = await apiClient.createQrSession({ ...newSession, churchId: selectedChurch.id }, token)
+            setCreatedSession(res.data)
             toast({
                 title: "Success",
                 description: "QR session created successfully",
             })
-            setShowCreateDialog(false)
+            // Do not close dialog immediately
+            // setShowCreateDialog(false)
             loadSessions()
             setNewSession({
                 sessionName: "",
@@ -177,7 +180,8 @@ export function QRAttendanceManagement() {
         // Session Title
         ctx.fillStyle = "#3b82f6"
         ctx.font = "bold 64px Inter, system-ui, sans-serif"
-        ctx.fillText(session.session_name.toUpperCase(), 400, 350)
+        const sessionName = session.session_name || session.sessionName || "Session"
+        ctx.fillText(sessionName.toUpperCase(), 400, 350)
 
         // Details Wrap
         ctx.fillStyle = "rgba(255, 255, 255, 0.05)"
@@ -186,14 +190,17 @@ export function QRAttendanceManagement() {
 
         ctx.font = "bold 32px Inter, system-ui, sans-serif"
         ctx.fillStyle = "#ffffff"
-        const dateStr = new Date(session.session_date).toLocaleDateString(undefined, {
+        const sessionDate = session.session_date || session.sessionDate
+        const sessionTime = session.session_time || session.sessionTime
+
+        const dateStr = new Date(sessionDate).toLocaleDateString(undefined, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         })
         ctx.fillText(dateStr, 400, 490)
-        ctx.fillText(`at ${session.session_time}`, 400, 550)
+        ctx.fillText(`at ${sessionTime}`, 400, 550)
 
         // Message
         ctx.font = "bold 40px Inter, system-ui, sans-serif"
@@ -217,11 +224,11 @@ export function QRAttendanceManagement() {
 
             // Download
             const link = document.createElement("a")
-            link.download = `checkin-${session.session_name.toLowerCase().replace(/\s+/g, "-")}.png`
+            link.download = `checkin-${sessionName.toLowerCase().replace(/\s+/g, "-")}.png`
             link.href = canvas.toDataURL("image/png")
             link.click()
         }
-        qrImg.src = session.qrCodeImage
+        qrImg.src = session.qrCodeImage || session.qr_image_url
     }
 
     if (userRole === "member" || userRole === "user") return null
@@ -233,7 +240,10 @@ export function QRAttendanceManagement() {
                     <h3 className="text-lg font-bold">QR Attendance</h3>
                     <p className="text-sm text-muted-foreground text-balance">Generate codes for quick check-in</p>
                 </div>
-                <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <Dialog open={showCreateDialog} onOpenChange={(open) => {
+                    setShowCreateDialog(open)
+                    if (!open) setCreatedSession(null)
+                }}>
                     <DialogTrigger asChild>
                         <Button variant="outline" className="gap-2 bg-primary/5 border-primary/20 hover:bg-primary/10">
                             <QrCode className="w-4 h-4" />
@@ -245,92 +255,136 @@ export function QRAttendanceManagement() {
                             <DialogTitle>Create New QR Session</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 pt-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="sessionName">Session Name *</Label>
-                                <Input
-                                    id="sessionName"
-                                    value={newSession.sessionName}
-                                    onChange={(e) => setNewSession({ ...newSession, sessionName: e.target.value })}
-                                    placeholder="Sunday Morning Service"
-                                    className="bg-background/50"
-                                />
-                            </div>
+                            <div className="space-y-4 pt-4">
+                                {createdSession ? (
+                                    <div className="space-y-6 text-center">
+                                        <div className="flex flex-col items-center gap-4">
+                                            <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                                                {createdSession.qrCodeImage && (
+                                                    <img
+                                                        src={createdSession.qrCodeImage}
+                                                        alt="QR Code"
+                                                        className="w-48 h-48 rounded-lg mix-blend-screen"
+                                                    />
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-bold text-primary">{createdSession.sessionName}</h3>
+                                                <p className="text-sm text-muted-foreground">{createdSession.sessionDate} at {createdSession.sessionTime}</p>
+                                            </div>
+                                        </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="sessionDate">Date *</Label>
-                                    <Input
-                                        id="sessionDate"
-                                        type="date"
-                                        value={newSession.sessionDate}
-                                        onChange={(e) => setNewSession({ ...newSession, sessionDate: e.target.value })}
-                                        className="bg-background/50"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="sessionTime">Time *</Label>
-                                    <Input
-                                        id="sessionTime"
-                                        type="time"
-                                        value={newSession.sessionTime}
-                                        onChange={(e) => setNewSession({ ...newSession, sessionTime: e.target.value })}
-                                        className="bg-background/50"
-                                    />
-                                </div>
-                            </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Button
+                                                onClick={() => handleDownloadFlyer(createdSession)}
+                                                className="w-full gap-2"
+                                                variant="default"
+                                            >
+                                                <QrCode className="w-4 h-4" /> Download PNG
+                                            </Button>
+                                            <Button
+                                                onClick={() => {
+                                                    setShowCreateDialog(false)
+                                                    setCreatedSession(null)
+                                                }}
+                                                variant="outline"
+                                                className="w-full"
+                                            >
+                                                Done
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="sessionName">Session Name *</Label>
+                                            <Input
+                                                id="sessionName"
+                                                value={newSession.sessionName}
+                                                onChange={(e) => setNewSession({ ...newSession, sessionName: e.target.value })}
+                                                placeholder="Sunday Morning Service"
+                                                className="bg-background/50"
+                                            />
+                                        </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="serviceType">Service Type</Label>
-                                    <Select
-                                        value={newSession.serviceType}
-                                        onValueChange={(value) => setNewSession({ ...newSession, serviceType: value })}
-                                    >
-                                        <SelectTrigger id="serviceType" className="bg-background/50">
-                                            <SelectValue placeholder="Select type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Sunday Service">Sunday Service</SelectItem>
-                                            <SelectItem value="Midweek Service">Midweek Service</SelectItem>
-                                            <SelectItem value="Prayer Meeting">Prayer Meeting</SelectItem>
-                                            <SelectItem value="Special Event">Special Event</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="language">Language</Label>
-                                    <Select
-                                        value={newSession.language}
-                                        onValueChange={(value) => setNewSession({ ...newSession, language: value })}
-                                    >
-                                        <SelectTrigger id="language" className="bg-background/50">
-                                            <SelectValue placeholder="Select language" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="English">English</SelectItem>
-                                            <SelectItem value="Tamil">Tamil</SelectItem>
-                                            <SelectItem value="Hindi">Hindi</SelectItem>
-                                            <SelectItem value="Malayalam">Malayalam</SelectItem>
-                                            <SelectItem value="Urdu">Urdu</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="sessionDate">Date *</Label>
+                                                <Input
+                                                    id="sessionDate"
+                                                    type="date"
+                                                    value={newSession.sessionDate}
+                                                    onChange={(e) => setNewSession({ ...newSession, sessionDate: e.target.value })}
+                                                    className="bg-background/50"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="sessionTime">Time *</Label>
+                                                <Input
+                                                    id="sessionTime"
+                                                    type="time"
+                                                    value={newSession.sessionTime}
+                                                    onChange={(e) => setNewSession({ ...newSession, sessionTime: e.target.value })}
+                                                    className="bg-background/50"
+                                                />
+                                            </div>
+                                        </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="expiresAt">Expires At (Optional)</Label>
-                                <Input
-                                    id="expiresAt"
-                                    type="datetime-local"
-                                    value={newSession.expiresAt}
-                                    onChange={(e) => setNewSession({ ...newSession, expiresAt: e.target.value })}
-                                    className="bg-background/50"
-                                />
-                            </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="serviceType">Service Type</Label>
+                                                <Select
+                                                    value={newSession.serviceType}
+                                                    onValueChange={(value) => setNewSession({ ...newSession, serviceType: value })}
+                                                >
+                                                    <SelectTrigger id="serviceType" className="bg-background/50">
+                                                        <SelectValue placeholder="Select type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="Sunday Service">Sunday Service</SelectItem>
+                                                        <SelectItem value="Midweek Service">Midweek Service</SelectItem>
+                                                        <SelectItem value="Prayer Meeting">Prayer Meeting</SelectItem>
+                                                        <SelectItem value="Special Event">Special Event</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="language">Language</Label>
+                                                <Select
+                                                    value={newSession.language}
+                                                    onValueChange={(value) => setNewSession({ ...newSession, language: value })}
+                                                >
+                                                    <SelectTrigger id="language" className="bg-background/50">
+                                                        <SelectValue placeholder="Select language" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="English">English</SelectItem>
+                                                        <SelectItem value="Tamil">Tamil</SelectItem>
+                                                        <SelectItem value="Hindi">Hindi</SelectItem>
+                                                        <SelectItem value="Malayalam">Malayalam</SelectItem>
+                                                        <SelectItem value="Urdu">Urdu</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
 
-                            <Button onClick={handleCreateSession} disabled={loading} className="w-full mt-2 py-6 text-lg font-semibold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]">
-                                {loading ? "Creating..." : "Create Session"}
-                            </Button>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="expiresAt">Expires At (Optional)</Label>
+                                            <Input
+                                                id="expiresAt"
+                                                type="datetime-local"
+                                                value={newSession.expiresAt}
+                                                onChange={(e) => setNewSession({ ...newSession, expiresAt: e.target.value })}
+                                                className="bg-background/50"
+                                            />
+                                        </div>
+
+                                        <Button onClick={handleCreateSession} disabled={loading} className="w-full mt-2 py-6 text-lg font-semibold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]">
+                                            {loading ? "Creating..." : "Create Session"}
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </DialogContent>
                 </Dialog>
