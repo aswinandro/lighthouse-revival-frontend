@@ -27,7 +27,7 @@ export function QRAttendanceManagement() {
         sessionName: "",
         sessionDate: "",
         sessionTime: "",
-        serviceType: "Sunday_Service",
+        serviceType: "Sunday Service",
         language: "English",
         expiresAt: "",
     })
@@ -81,7 +81,7 @@ export function QRAttendanceManagement() {
                 sessionName: "",
                 sessionDate: "",
                 sessionTime: "",
-                serviceType: "Sunday_Service",
+                serviceType: "Sunday Service",
                 language: "English",
                 expiresAt: "",
             })
@@ -290,10 +290,10 @@ export function QRAttendanceManagement() {
                                             <SelectValue placeholder="Select type" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="Sunday_Service">Sunday Service</SelectItem>
-                                            <SelectItem value="Midweek_Service">Midweek Service</SelectItem>
-                                            <SelectItem value="Prayer_Meeting">Prayer Meeting</SelectItem>
-                                            <SelectItem value="Special_Event">Special Event</SelectItem>
+                                            <SelectItem value="Sunday Service">Sunday Service</SelectItem>
+                                            <SelectItem value="Midweek Service">Midweek Service</SelectItem>
+                                            <SelectItem value="Prayer Meeting">Prayer Meeting</SelectItem>
+                                            <SelectItem value="Special Event">Special Event</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
