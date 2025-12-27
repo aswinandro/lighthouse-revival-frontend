@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getMemberService, updateMemberService, deleteMemberService } from "@/lib/services/members-service"
+import { getMemberByIdService, updateMemberService, deleteMemberService } from "@/lib/services/members-service"
 
 export const runtime = 'edge'
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const member = await getMemberService(params.id, 1)
+    const member = await getMemberByIdService(params.id as any)
     return NextResponse.json({ success: true, data: member })
   } catch (error) {
     console.error("Error fetching member:", error)
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await request.json()
-    const member = await updateMemberService(params.id, body)
+    const member = await updateMemberService(params.id as any, body)
     return NextResponse.json({ success: true, data: member })
   } catch (error) {
     console.error("Error updating member:", error)
@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await deleteMemberService(params.id)
+    await deleteMemberService(params.id as any)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error deleting member:", error)
