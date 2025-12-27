@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Building2, Plus, Users, DollarSign, TrendingUp, Eye, Edit, Trash2 } from "lucide-react"
+import { PhoneInput } from "@/components/ui/phone-input"
 import { useChurch } from "@/components/providers/church-context"
 import { WeeklyReportsManagement } from "@/components/dashboard/weekly-reports-management"
 import { ChurchesManagement } from "@/components/dashboard/churches-management"
@@ -70,7 +71,11 @@ export default function SuperAdminPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" placeholder="+971-XX-XXX-XXXX" />
+                    <PhoneInput
+                      id="phone"
+                      value={""} // Since it's currently unmanaged in this dialog
+                      onChange={() => { }}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>

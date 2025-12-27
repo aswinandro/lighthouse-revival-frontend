@@ -13,6 +13,7 @@ import { Building2, Plus, Users, DollarSign, TrendingUp, Eye, Edit, UserPlus, XC
 import React, { useEffect, useState } from "react"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 type Church = {
   id: string
@@ -316,11 +317,10 @@ export function ChurchesManagement() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
-                    <Input
+                    <PhoneInput
                       id="phone"
-                      placeholder="+971-XX-XXX-XXXX"
                       value={churchForm.phone}
-                      onChange={(e) => setChurchForm({ ...churchForm, phone: e.target.value })}
+                      onChange={(val) => setChurchForm({ ...churchForm, phone: val })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -614,10 +614,10 @@ export function ChurchesManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="editPhone">Phone</Label>
-                  <Input
+                  <PhoneInput
                     id="editPhone"
                     value={(editingChurch as any).phone || ""}
-                    onChange={(e) => setEditingChurch({ ...editingChurch, phone: e.target.value } as any)}
+                    onChange={(val) => setEditingChurch({ ...editingChurch, phone: val } as any)}
                   />
                 </div>
                 <div className="space-y-2">

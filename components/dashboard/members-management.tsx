@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Edit, Trash2, Mail, Phone, MapPin } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 // Define Member type
 // Define Member type
@@ -283,11 +284,11 @@ export default function MembersManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input
+                <PhoneInput
                   id="phone"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+971..."
+                  onChange={(val) => setFormData({ ...formData, phone: val })}
+                  placeholder="50 123 4567"
                 />
               </div>
               <div className="space-y-2">
@@ -394,10 +395,10 @@ export default function MembersManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit_phone">Phone</Label>
-                <Input
+                <PhoneInput
                   id="edit_phone"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(val) => setFormData({ ...formData, phone: val })}
                 />
               </div>
               <div className="space-y-2">

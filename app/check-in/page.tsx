@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { apiClient } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
 import { CheckCircle2, Loader2, Phone, User as UserIcon } from "lucide-react"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 export default function CheckInPage() {
     return (
@@ -57,7 +58,7 @@ function CheckInContent() {
             let activeSession = null
 
             if (sessionId) {
-                const response = await apiClient.getQRSessionPublicInfo(sessionId) as any
+                const response = await apiClient.getSessionDetails(sessionId) as any
                 activeSession = response.data
             } else {
                 const response = await apiClient.getLatestActiveSession() as any
@@ -69,11 +70,6 @@ function CheckInContent() {
             // 3. If user is logged in, auto-mark attendance
             if (currentUser && activeSession) {
                 handleCheckIn(activeSession.id, currentUser.phone || "", currentUser.email || "")
-            } else {
-                // Otherwise, focus on phone input after a short delay
-                setTimeout(() => {
-                    phoneInputRef.current?.focus()
-                }, 500)
             }
         } catch (error: any) {
             console.error("Failed to load session", error)
@@ -240,12 +236,11 @@ function CheckInContent() {
 
                         <div className="space-y-2">
                             <Label htmlFor="phone">Phone Number *</Label>
-                            <Input
-                                id="phone"
-                                type="tel"
+                            <PhoneInput
                                 value={signUpData.phone}
-                                onChange={(e) => setSignUpData({ ...signUpData, phone: e.target.value })}
+                                onChange={(val) => setSignUpData({ ...signUpData, phone: val })}
                                 className="bg-background/50 h-12"
+                                required
                             />
                         </div>
 
@@ -296,21 +291,14 @@ function CheckInContent() {
                             <Label htmlFor="phoneCheck" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                                 Phone Number
                             </Label>
-                            <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                                    <Phone className="w-5 h-5" />
-                                </div>
-                                <Input
-                                    id="phoneCheck"
-                                    ref={phoneInputRef}
-                                    type="tel"
-                                    placeholder="+971 -- --- ----"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    className="h-14 pl-12 bg-background/50 border-border group-hover:border-primary/50 focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-2xl text-lg transition-all"
-                                    required
-                                />
-                            </div>
+                            <PhoneInput
+                                value={phone}
+                                onChange={setPhone}
+                                placeholder="50 123 4567"
+                                required
+                                className="h-14 bg-background/50 border-border rounded-2xl text-lg transition-all"
+                                autoFocus
+                            />
                         </div>
 
                         <Button

@@ -2,6 +2,8 @@
 
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { useState } from "react"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 const welfareText = [
   "We are delighted to extend a warm welcome to you as you join us in our mission to support and uplift members of our community through our church welfare program.",
@@ -11,6 +13,9 @@ const welfareText = [
 ]
 
 export default function WelfarePageClient() {
+  const [phone, setPhone] = useState("")
+  const [whatsapp, setWhatsapp] = useState("")
+
   return (
     <div className="bg-background text-foreground">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
@@ -77,9 +82,17 @@ export default function WelfarePageClient() {
                   <input type="text" placeholder="First Name" className="p-3 rounded-lg border border-border bg-background" />
                   <input type="text" placeholder="Last Name" className="p-3 rounded-lg border border-border bg-background" />
                   <input type="email" placeholder="Email" className="p-3 rounded-lg border border-border bg-background" />
-                  <input type="tel" placeholder="Phone" className="p-3 rounded-lg border border-border bg-background" />
+                  <PhoneInput
+                    value={phone}
+                    onChange={setPhone}
+                    placeholder="Phone Number"
+                  />
                   <input type="text" placeholder="Welfare" className="p-3 rounded-lg border border-border bg-background md:col-span-2" />
-                  <input type="text" placeholder="Whatsapp Number" className="p-3 rounded-lg border border-border bg-background" />
+                  <PhoneInput
+                    value={whatsapp}
+                    onChange={setWhatsapp}
+                    placeholder="WhatsApp Number"
+                  />
                   <input type="text" placeholder="How to Contact" className="p-3 rounded-lg border border-border bg-background" />
                   <button className="md:col-span-2 py-3 px-6 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all">
                     Submit

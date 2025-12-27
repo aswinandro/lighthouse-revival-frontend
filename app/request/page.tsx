@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { apiClient } from "@/lib/api-client"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 // Data for church contacts
 const churchContacts = [
@@ -187,13 +188,10 @@ export default function PrayerRequestPage() {
                     className="p-3 rounded-lg border border-border bg-background"
                     required
                   />
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="Your Phone"
+                  <PhoneInput
                     value={form.phone}
-                    onChange={handleChange}
-                    className="p-3 rounded-lg border border-border bg-background"
+                    onChange={(val) => setForm({ ...form, phone: val })}
+                    placeholder="Your Phone Number"
                     required
                   />
                   <textarea
