@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { CheckCircle, Loader2, UserPlus, LogIn, AlertCircle } from "lucide-react"
 
@@ -13,7 +13,7 @@ import { OnboardingForm } from "@/components/attendance/onboarding-form"
 
 type ViewState = 'loading' | 'phone-entry' | 'success' | 'onboarding' | 'error'
 
-export default function QRScanPage() {
+function QRScanContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const sessionId = searchParams.get('sessionId')
@@ -209,5 +209,13 @@ export default function QRScanPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function QRScanPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>}>
+      <QRScanContent />
+    </Suspense>
   )
 }
