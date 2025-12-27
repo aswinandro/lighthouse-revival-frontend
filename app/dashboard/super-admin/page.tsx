@@ -16,38 +16,18 @@ import { WeeklyReportsManagement } from "@/components/dashboard/weekly-reports-m
 import { ChurchesManagement } from "@/components/dashboard/churches-management"
 import PreachingSchedulesManagement from "@/components/dashboard/preaching-schedules-management"
 import MembersManagement from "@/components/dashboard/members-management"
+import { QRAttendanceManagement } from "@/components/dashboard/qr-attendance-management"
 
 export default function SuperAdminPage() {
   const { churches } = useChurch()
-  const [selectedView, setSelectedView] = useState<"churches" | "schedules" | "reports" | "users">("churches")
+  const [selectedView, setSelectedView] = useState<"churches" | "schedules" | "reports" | "users" | "qr">("churches")
 
   const churchStats = [
     { id: "1", name: "Abu Dhabi Church", members: 1247, income: 45000, expenses: 32000, attendance: 892 },
     { id: "2", name: "Dubai Church", members: 856, income: 38000, expenses: 28000, attendance: 654 },
     { id: "3", name: "Sharjah Church", members: 432, income: 22000, expenses: 18000, attendance: 321 },
   ]
-
-  const preachingSchedules = [
-    {
-      id: "1",
-      church: "Abu Dhabi Church",
-      pastor: "Pastor Michael",
-      week: "Jan 28 - Feb 3",
-      topic: "The Power of Faith",
-      scripture: "Hebrews 11:1-6",
-      status: "Scheduled",
-    },
-    {
-      id: "2",
-      church: "Dubai Church",
-      pastor: "Pastor David",
-      week: "Jan 28 - Feb 3",
-      topic: "Walking in Love",
-      scripture: "1 Corinthians 13",
-      status: "Completed",
-    },
-  ]
-
+  // ... existing preachingSchedules ...
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -112,12 +92,13 @@ export default function SuperAdminPage() {
       </div>
 
       {/* View Selector */}
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-2 border-b overflow-x-auto pb-2">
         {[
           { id: "churches", label: "Churches" },
           { id: "schedules", label: "Preaching Schedules" },
           { id: "reports", label: "Financial Reports" },
           { id: "users", label: "User Management" },
+          { id: "qr", label: "QR Attendance" },
         ].map((view) => (
           <Button
             key={view.id}
@@ -147,6 +128,11 @@ export default function SuperAdminPage() {
       {/* User/Member Management */}
       {selectedView === "users" && (
         <MembersManagement />
+      )}
+
+      {/* QR Code Management */}
+      {selectedView === "qr" && (
+        <QRAttendanceManagement />
       )}
     </div>
   )

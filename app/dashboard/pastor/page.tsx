@@ -13,9 +13,11 @@ import { DollarSign, TrendingUp, Users, Calendar, Plus, FileText, Send } from "l
 import { useChurch } from "@/components/providers/church-context"
 
 import { WeeklyReportsManagement } from "@/components/dashboard/weekly-reports-management"
+import { QRAttendanceManagement } from "@/components/dashboard/qr-attendance-management"
 
 export default function PastorDashboardPage() {
   const { selectedChurch } = useChurch()
+  const [selectedView, setSelectedView] = useState<"reports" | "qr" | "assignments">("reports")
 
   const preachingAssignments = [
     {
@@ -65,11 +67,67 @@ export default function PastorDashboardPage() {
         })}
       </div>
 
-      {/* Weekly Reports Management - Handles Create and View */}
-      <WeeklyReportsManagement />
+      {/* View Selector */}
+      <div className="flex gap-2 border-b">
+        {[
+          { id: "reports", label: "Weekly Reports" },
+          { id: "qr", label: "QR Attendance" },
+          { id: "assignments", label: "Assignments" },
+        ].map((view) => (
+          <Button
+            key={view.id}
+            variant={selectedView === view.id ? "default" : "ghost"}
+            onClick={() => setSelectedView(view.id as any)}
+          >
+            {view.label}
+          </Button>
+        ))}
+      </div>
 
-      {/* Preaching Assignments */}
-// ... rest of file ...
+      {/* Weekly Reports Management */}
+      {selectedView === "reports" && (
+        <WeeklyReportsManagement />
+      )}
+
+      {/* QR Code Management */}
+      {selectedView === "qr" && (
+        <QRAttendanceManagement />
+      )}
+
+      {/* Preaching Assignments Placeholder */}
+      {selectedView === "assignments" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Preaching Assignments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Week</TableHead>
+                  <TableHead>Topic</TableHead>
+                  <TableHead>Scripture</TableHead>
+                  <TableHead>Comments</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {preachingAssignments.map((assignment) => (
+                  <TableRow key={assignment.id}>
+                    <TableCell>{assignment.week}</TableCell>
+                    <TableCell>{assignment.topic}</TableCell>
+                    <TableCell>{assignment.scripture}</TableCell>
+                    <TableCell>{assignment.comments}</TableCell>
+                    <TableCell>
+                      <Badge>{assignment.status}</Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

@@ -512,7 +512,7 @@ class ApiClient {
   }
 
   // QR Attendance endpoints
-  async createQRSession(data: any, token: string) {
+  async createQrSession(data: any, token: string) {
     return this.request("/qr-attendance/sessions", {
       method: "POST",
       body: JSON.stringify(data),
@@ -581,8 +581,15 @@ class ApiClient {
     return this.request(`/users${queryString}`, { token })
   }
 
-  async getQRSessionPublicInfo(sessionId: string) {
-    return this.request(`/qr-attendance/sessions/public/${sessionId}`)
+  async getSessionDetails(sessionId: string) {
+    return this.request(`/qr-attendance/public/session?sessionId=${sessionId}`)
+  }
+
+  async submitAttendance(data: { sessionId: string; phoneNumber: string; memberDetails?: any }) {
+    return this.request("/qr-attendance/public/attendance", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
   }
 
   async getLatestActiveSession(churchId?: string) {
