@@ -80,6 +80,8 @@ export default function SignupPage() {
     loadChurches()
   }, [])
 
+  const normalizePhoneValue = (p: string) => p.replace(/\D/g, "")
+
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -93,7 +95,8 @@ export default function SignupPage() {
     }
 
     try {
-      const res: any = await apiClient.checkUserStatus(phone)
+      const normalizedPhone = normalizePhoneValue(phone)
+      const res: any = await apiClient.checkUserStatus(normalizedPhone)
       const data = res.data
 
       if (data.exists) {
@@ -129,12 +132,13 @@ export default function SignupPage() {
     setIsLoading(true)
 
     try {
+      const normalizedPhone = normalizePhoneValue(phone)
       const response = await apiClient.register({
         firstName,
         lastName,
         email,
         password,
-        phone,
+        phone: normalizedPhone,
         country,
         city,
         emirate: country === "UAE" ? emirate : undefined,
@@ -223,7 +227,6 @@ export default function SignupPage() {
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     className="bg-white/5 border-white/10 focus:border-primary/50 transition-all h-11"
-                    disabled={!!foundMember} // Lock name if strictly matching
                   />
                 </div>
                 <div className="grid gap-2">
@@ -235,7 +238,6 @@ export default function SignupPage() {
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     className="bg-white/5 border-white/10 focus:border-primary/50 transition-all h-11"
-                    disabled={!!foundMember}
                   />
                 </div>
               </div>
@@ -266,71 +268,67 @@ export default function SignupPage() {
                 />
               </div>
 
-              {!foundMember && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label className="text-xs uppercase tracking-widest text-slate-500 font-bold">Country</Label>
-                      <Select value={country} onValueChange={handleCountryChange}>
-                        <SelectTrigger className="bg-white/5 border-white/10 h-11">
-                          <SelectValue placeholder="Select Country" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-900 border-white/10 text-white">
-                          <SelectItem value="UAE">UAE</SelectItem>
-                          <SelectItem value="Oman">Oman</SelectItem>
-                          <SelectItem value="Qatar">Qatar</SelectItem>
-                          <SelectItem value="Kuwait">Kuwait</SelectItem>
-                          <SelectItem value="Bahrain">Bahrain</SelectItem>
-                          <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
-                          <SelectItem value="India">India</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label className="text-xs uppercase tracking-widest text-slate-500 font-bold">City / Emirate</Label>
-                      {country === "UAE" ? (
-                        <Select value={emirate} onValueChange={setEmirate}>
-                          <SelectTrigger className="bg-white/5 border-white/10 h-11">
-                            <SelectValue placeholder="Select Emirate" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-slate-900 border-white/10 text-white">
-                            <SelectItem value="Abu Dhabi">Abu Dhabi</SelectItem>
-                            <SelectItem value="Dubai">Dubai</SelectItem>
-                            <SelectItem value="Sharjah">Sharjah</SelectItem>
-                            <SelectItem value="Ajman">Ajman</SelectItem>
-                            <SelectItem value="Umm Al Quwain">Umm Al Quwain</SelectItem>
-                            <SelectItem value="Ras Al Khaimah">Ras Al Khaimah</SelectItem>
-                            <SelectItem value="Fujairah">Fujairah</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Input
-                          placeholder="Enter city"
-                          value={city}
-                          onChange={(e) => setCity(e.target.value)}
-                          className="bg-white/5 border-white/10 h-11"
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label className="text-xs uppercase tracking-widest text-slate-500 font-bold">Select Church</Label>
-                    <Select value={churchId} onValueChange={setChurchId}>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label className="text-xs uppercase tracking-widest text-slate-500 font-bold">Country</Label>
+                  <Select value={country} onValueChange={handleCountryChange}>
+                    <SelectTrigger className="bg-white/5 border-white/10 h-11">
+                      <SelectValue placeholder="Select Country" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                      <SelectItem value="UAE">UAE</SelectItem>
+                      <SelectItem value="Oman">Oman</SelectItem>
+                      <SelectItem value="Qatar">Qatar</SelectItem>
+                      <SelectItem value="Kuwait">Kuwait</SelectItem>
+                      <SelectItem value="Bahrain">Bahrain</SelectItem>
+                      <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
+                      <SelectItem value="India">India</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-xs uppercase tracking-widest text-slate-500 font-bold">City / Emirate</Label>
+                  {country === "UAE" ? (
+                    <Select value={emirate} onValueChange={setEmirate}>
                       <SelectTrigger className="bg-white/5 border-white/10 h-11">
-                        <SelectValue placeholder="Which church do you attend?" />
+                        <SelectValue placeholder="Select Emirate" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-white/10 text-white">
-                        {churches.map((church) => (
-                          <SelectItem key={church.id} value={church.id}>
-                            {church.name} ({church.city})
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="Abu Dhabi">Abu Dhabi</SelectItem>
+                        <SelectItem value="Dubai">Dubai</SelectItem>
+                        <SelectItem value="Sharjah">Sharjah</SelectItem>
+                        <SelectItem value="Ajman">Ajman</SelectItem>
+                        <SelectItem value="Umm Al Quwain">Umm Al Quwain</SelectItem>
+                        <SelectItem value="Ras Al Khaimah">Ras Al Khaimah</SelectItem>
+                        <SelectItem value="Fujairah">Fujairah</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                </>
-              )}
+                  ) : (
+                    <Input
+                      placeholder="Enter city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="bg-white/5 border-white/10 h-11"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label className="text-xs uppercase tracking-widest text-slate-500 font-bold">Select Church</Label>
+                <Select value={churchId} onValueChange={setChurchId}>
+                  <SelectTrigger className="bg-white/5 border-white/10 h-11">
+                    <SelectValue placeholder="Which church do you attend?" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    {churches.map((church) => (
+                      <SelectItem key={church.id} value={church.id}>
+                        {church.name} ({church.city})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {foundMember && (
                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-sm text-primary-foreground mb-2">
