@@ -25,6 +25,7 @@ function QRScanContent() {
   const [errorMsg, setErrorMsg] = useState("")
   const [successMsg, setSuccessMsg] = useState("")
   const [userName, setUserName] = useState("")
+  const [visitorData, setVisitorData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
 
   // 1. Load Session Details
@@ -63,13 +64,14 @@ function QRScanContent() {
         phoneNumber: phone
       })
 
-      const { status, message, name } = res.data
+      const { status, message, name, visitor } = res.data
 
       if (status === 'success' || status === 'already_checked_in') {
         setSuccessMsg(message)
         setUserName(name)
         setViewState('success')
       } else if (status === 'needs_registration') {
+        if (visitor) setVisitorData(visitor)
         setViewState('onboarding')
       }
     } catch (err: any) {
@@ -165,11 +167,12 @@ function QRScanContent() {
         <div className="w-full max-w-lg space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome!</h1>
-            <p className="text-muted-foreground">Complete your profile to join the family.</p>
+            <p className="text-muted-foreground">{visitorData ? `Welcome back, ${visitorData.first_name}! Let's complete your profile.` : "Complete your profile to join the family."}</p>
           </div>
 
           <OnboardingForm
             phone={phone}
+            initialData={visitorData}
             onSubmit={handleOnboardingComplete}
             onCancel={() => setViewState('phone-entry')}
           />

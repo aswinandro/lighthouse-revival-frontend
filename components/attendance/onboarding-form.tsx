@@ -32,20 +32,26 @@ const onboardingSchema = z.object({
 
 interface OnboardingFormProps {
     phone: string
+    initialData?: any
     onSubmit: (data: z.infer<typeof onboardingSchema>) => void
     onCancel: () => void
 }
 
-export function OnboardingForm({ phone, onSubmit, onCancel }: OnboardingFormProps) {
+export function OnboardingForm({ phone, initialData, onSubmit, onCancel }: OnboardingFormProps) {
     const form = useForm<z.infer<typeof onboardingSchema>>({
         resolver: zodResolver(onboardingSchema),
         defaultValues: {
-            firstName: "",
-            lastName: "",
+            firstName: initialData?.first_name || "",
+            lastName: initialData?.last_name || "",
             phone: phone,
-            email: "",
-            country: "UAE",
-            city: "Dubai",
+            email: initialData?.email || "",
+            country: initialData?.country || "UAE",
+            city: initialData?.city || "Dubai",
+            gender: initialData?.gender || "",
+            dateOfBirth: initialData?.date_of_birth || "",
+            maritalStatus: initialData?.marital_status || "",
+            occupation: initialData?.occupation || "",
+            heardFrom: initialData?.how_did_you_hear || "",
         },
     })
 
