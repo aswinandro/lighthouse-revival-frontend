@@ -60,9 +60,10 @@ interface PhoneInputProps {
     placeholder?: string
     required?: boolean
     id?: string
+    autoFocus?: boolean
 }
 
-export function PhoneInput({ value, onChange, className, placeholder, required, id }: PhoneInputProps) {
+export function PhoneInput({ value, onChange, className, placeholder, required, id, autoFocus }: PhoneInputProps) {
     const [open, setOpen] = React.useState(false)
     const [countryCode, setCountryCode] = React.useState("+971")
     const [phoneNumber, setPhoneNumber] = React.useState("")
@@ -167,6 +168,7 @@ export function PhoneInput({ value, onChange, className, placeholder, required, 
                 required={required}
                 value={phoneNumber}
                 onChange={handlePhoneChange}
+                autoFocus={autoFocus}
                 className="flex-1 bg-white/5 border-white/10 focus:border-primary/50 transition-all text-white"
             />
         </div>

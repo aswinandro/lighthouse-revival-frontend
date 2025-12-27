@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { apiClient } from "@/lib/api-client"
 import { OnboardingForm } from "@/components/attendance/onboarding-form"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 type ViewState = 'loading' | 'phone-entry' | 'success' | 'onboarding' | 'error'
 
@@ -199,13 +200,12 @@ function QRScanContent() {
           <form onSubmit={handlePhoneSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-base">Mobile Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="050 123 4567"
-                className="text-lg h-14 bg-background"
+              <PhoneInput
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={setPhone}
+                placeholder="50 123 4567"
+                required
+                className="text-lg h-14 bg-background"
                 autoFocus
               />
             </div>
