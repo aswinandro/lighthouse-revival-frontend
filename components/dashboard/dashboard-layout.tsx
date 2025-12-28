@@ -28,6 +28,7 @@ import {
   QrCode,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Loader } from "@/components/ui/loader"
 
 
 interface DashboardLayoutProps {
@@ -130,10 +131,9 @@ export function DashboardLayout({ children, activeTab, onTabChange }: DashboardL
             {/* Navigation */}
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto font-medium">
               {isChurchLoading ? (
-                <div className="space-y-3 pt-2">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-11 w-full bg-muted/50 rounded-md animate-pulse" />
-                  ))}
+                <div className="flex flex-col items-center justify-center py-10 space-y-4">
+                  <Loader size={40} />
+                  <p className="text-xs text-muted-foreground animate-pulse">Syncing...</p>
                 </div>
               ) : (
                 filteredNavItems.map((item) => {

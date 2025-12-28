@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { apiClient } from "@/lib/api-client"
 import { PhoneInput } from "@/components/ui/phone-input"
+import { Loader } from "@/components/ui/loader"
 
 // Data for church contacts
 const churchContacts = [
@@ -243,9 +244,9 @@ export default function PrayerRequestPage() {
                     <button
                       type="submit"
                       disabled={loading || isSubmitted}
-                      className="flex-1 py-3 px-6 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition"
+                      className="flex-1 py-3 px-6 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition flex items-center justify-center gap-2"
                     >
-                      {loading ? "Sending..." : (isSubmitted ? "Successfully Sent!" : "Send Request")}
+                      {loading ? <Loader size={20} /> : (isSubmitted ? "Successfully Sent!" : "Send Request")}
                     </button>
                     <button
                       type="button"

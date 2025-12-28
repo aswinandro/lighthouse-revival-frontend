@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { QrCode, Calendar, Clock, Users } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { cn, getToken } from "@/lib/utils"
+import { Loader } from "@/components/ui/loader"
 import { useToast } from "@/hooks/use-toast"
 import { useChurch } from "@/components/providers/church-context"
 
@@ -294,6 +295,22 @@ export function QRAttendanceManagement() {
     }
 
     if (userRole === "member" || userRole === "user") return null
+
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center p-12 space-y-4">
+            <Loader size={80} />
+            <p className="text-sm text-muted-foreground animate-pulse">Syncing with Lighthouse...</p>
+        </div>
+    )
+
+    if (loading && sessions.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <Loader size={80} />
+                <p className="text-sm text-muted-foreground animate-pulse">Generating digital keys...</p>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6">

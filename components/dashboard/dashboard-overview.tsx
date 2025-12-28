@@ -11,6 +11,7 @@ import { fetchDashboardOverview, fetchAttendanceTrends } from "@/lib/services/da
 import { Alert } from "@/components/ui/alert"
 import { useChurch } from "@/components/providers/church-context"
 import { MemberOverview } from "./member-overview"
+import { Loader } from "@/components/ui/loader"
 
 
 export function DashboardOverview() {
@@ -87,12 +88,20 @@ export function DashboardOverview() {
 
   if (isChurchLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-32 bg-muted rounded-lg" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-64 bg-muted rounded-lg" />
-          <div className="h-64 bg-muted rounded-lg" />
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={100} />
+        <p className="text-sm text-muted-foreground animate-pulse text-center">
+          Loading your sanctuary...
+        </p>
+      </div>
+    )
+  }
+
+  if (loading && !stats) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Compiling Kingdom insights...</p>
       </div>
     )
   }

@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { apiClient } from "@/lib/api-client"
 import { useChurch } from "@/components/providers/church-context"
+import { Loader } from "@/components/ui/loader"
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,10 +39,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
     try {
       const data: any = await apiClient.login(email, password);
       const token = data.token || data.accessToken || (data.data && data.data.token);
@@ -59,6 +62,8 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -108,8 +113,8 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full">
-              {t("login.loginButton")}
+            <Button type="submit" className="w-full h-11 flex items-center justify-center gap-2" disabled={isLoading}>
+              {isLoading ? <Loader size={24} /> : t("login.loginButton")}
             </Button>
             <Button variant="outline" className="w-full">
               {t("login.googleButton")}

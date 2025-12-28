@@ -10,6 +10,7 @@ import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { Alert } from "@/components/ui/alert"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts"
+import { Loader } from "@/components/ui/loader"
 
 export function MemberOverview() {
     const [user, setUser] = useState<any>(null)
@@ -56,13 +57,12 @@ export function MemberOverview() {
     }, [])
 
     if (loading) {
-        return <div className="space-y-6 animate-pulse">
-            <div className="h-32 bg-muted rounded-lg" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="h-64 bg-muted rounded-lg" />
-                <div className="h-64 bg-muted rounded-lg" />
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <Loader size={80} />
+                <p className="text-sm text-muted-foreground animate-pulse">Gathering your journey...</p>
             </div>
-        </div>
+        )
     }
 
     const getGraphData = () => {

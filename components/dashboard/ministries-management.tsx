@@ -8,6 +8,8 @@ import { Church, Users, Music, BookOpen, Heart, UserPlus, MapPin, Calendar, Plus
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect, useState } from "react"
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export function MinistriesManagement() {
   const [ministries, setMinistries] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -38,6 +41,11 @@ export function MinistriesManagement() {
       setMinistries(data.data || [])
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to load ministries",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -47,15 +55,33 @@ export function MinistriesManagement() {
     fetchMinistries()
   }, [])
 
+  if (loading && ministries.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Organizing the body...</p>
+      </div>
+    )
+  }
+
   const handleCreateMinistry = async () => {
     try {
       const token = getToken()
       if (!token) return
       await apiClient.createMinistry(formData, token)
       setCreateDialogOpen(false)
+      toast({
+        title: "Success",
+        description: "Ministry created successfully",
+      })
       fetchMinistries()
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to create ministry",
+        variant: "destructive",
+      })
     }
   }
 

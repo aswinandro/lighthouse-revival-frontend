@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { apiClient } from "@/lib/api-client"
 import { useToast } from "@/hooks/use-toast"
-import { CheckCircle2, Loader2, Phone, User as UserIcon } from "lucide-react"
+import { CheckCircle2, Phone, User as UserIcon } from "lucide-react"
 import { PhoneInput } from "@/components/ui/phone-input"
+import { Loader } from "@/components/ui/loader"
 
 export default function CheckInPage() {
     return (
@@ -146,11 +147,9 @@ function CheckInContent() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <div className="text-center space-y-4">
-                    <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
-                    <p className="text-muted-foreground animate-pulse">Setting things up for you...</p>
-                </div>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-background space-y-4">
+                <Loader size={80} />
+                <p className="text-sm text-muted-foreground animate-pulse">Setting things up for you...</p>
             </div>
         )
     }
@@ -260,7 +259,7 @@ function CheckInContent() {
                         </div>
 
                         <Button onClick={handleSignUp} disabled={submitting} className="w-full h-12 text-lg font-semibold mt-4">
-                            {submitting ? <Loader2 className="animate-spin" /> : "Complete Sign Up"}
+                            {submitting ? <Loader size={24} /> : "Complete Sign Up"}
                         </Button>
                     </CardContent>
                 </Card>
@@ -308,7 +307,7 @@ function CheckInContent() {
                         >
                             {submitting ? (
                                 <div className="flex items-center gap-2">
-                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <Loader size={24} />
                                     <span>Verifying...</span>
                                 </div>
                             ) : (

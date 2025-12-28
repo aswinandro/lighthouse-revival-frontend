@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { PhoneInput } from "@/components/ui/phone-input"
+import { Loader } from "@/components/ui/loader"
 
 export default function SignupPage() {
   const cardRef = useRef<HTMLDivElement>(null)
@@ -209,8 +210,8 @@ export default function SignupPage() {
                 />
               </div>
 
-              <Button type="submit" className="w-full h-12 mt-2 font-bold text-base" disabled={isLoading}>
-                {isLoading ? "Verifying..." : "Continue"}
+              <Button type="submit" className="w-full h-12 mt-2 font-bold text-base flex items-center justify-center gap-2" disabled={isLoading}>
+                {isLoading ? <Loader size={24} /> : "Continue"}
               </Button>
             </form>
           )}
@@ -336,8 +337,8 @@ export default function SignupPage() {
                 </div>
               )}
 
-              <Button type="submit" className="w-full h-12 mt-4 font-bold text-base shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]" disabled={isLoading}>
-                {isLoading ? "Creating Account..." : t("signup.createButton")}
+              <Button type="submit" className="w-full h-12 mt-4 font-bold text-base shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] flex items-center justify-center gap-2" disabled={isLoading}>
+                {isLoading ? <Loader size={24} /> : t("signup.createButton")}
               </Button>
 
               <Button type="button" variant="ghost" onClick={() => setStep(1)} className="w-full text-slate-500 hover:text-white">
