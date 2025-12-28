@@ -15,7 +15,7 @@ import { PhoneInput } from "@/components/ui/phone-input"
 import { useChurch } from "@/components/providers/church-context"
 import { WeeklyReportsManagement } from "@/components/dashboard/weekly-reports-management"
 import { ChurchesManagement } from "@/components/dashboard/churches-management"
-import PreachingSchedulesManagement from "@/components/dashboard/preaching-schedules-management"
+import { PreachingSchedulesManagement } from "@/components/dashboard/preaching-schedules-management";
 import MembersManagement from "@/components/dashboard/members-management"
 import { QRAttendanceManagement } from "@/components/dashboard/qr-attendance-management"
 

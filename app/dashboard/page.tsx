@@ -9,7 +9,7 @@ import { EventsManagement } from "@/components/dashboard/events-management";
 import { PrayerRequestsManagement } from "@/components/dashboard/prayer-requests-management";
 import { MinistriesManagement } from "@/components/dashboard/ministries-management";
 import { ChurchesManagement } from "@/components/dashboard/churches-management";
-import PreachingSchedulesManagement from "@/components/dashboard/preaching-schedules-management";
+import { PreachingSchedulesManagement } from "@/components/dashboard/preaching-schedules-management";
 import { WeeklyReportsManagement } from "@/components/dashboard/weekly-reports-management";
 import { EmailConfigManagement } from "@/components/dashboard/email-config-management";
 
