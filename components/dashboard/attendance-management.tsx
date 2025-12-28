@@ -11,6 +11,8 @@ import { Users, TrendingUp, Calendar, QrCode, Download, AlertTriangle, Clock } f
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect, useState } from "react"
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 import { useChurch } from "@/components/providers/church-context"
 import { QRAttendanceManagement } from "./qr-attendance-management"
 
@@ -20,6 +22,7 @@ export function AttendanceManagement() {
   const [todayAttendance, setTodayAttendance] = useState<any[]>([])
   const [memberAttendance, setMemberAttendance] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     async function loadMemberData() {
@@ -123,6 +126,15 @@ export function AttendanceManagement() {
     // ... keep mock absentees for now as backend logic for "absentees" is complex
   ]
 
+  if (loading && attendanceData.length === 0 && todayAttendance.length === 0 && memberAttendance.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Syncing congregation data...</p>
+      </div>
+    )
+  }
+
   if (userRole === "member" || userRole === "user") {
     return (
       <div className="space-y-6">
@@ -177,6 +189,15 @@ export function AttendanceManagement() {
             </CardContent>
           </Card>
         </div>
+      </div>
+    )
+  }
+
+  if (loading && attendanceData.length === 0 && todayAttendance.length === 0 && memberAttendance.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Counting the blessing...</p>
       </div>
     )
   }

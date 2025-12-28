@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/components/providers/language-provider"
 import { Navigation } from "@/components/layout/navigation"
 import { Footer } from "@/components/layout/footer"
 import { ChurchProvider } from "@/components/providers/church-context"
+import { Toaster } from "@/components/ui/toaster"
 
 const geist = Geist({
   subsets: ["latin"],
@@ -150,6 +151,7 @@ export default function RootLayout({
           <LanguageProvider>
             <ChurchProvider>
               <main className="flex-grow">{children}</main>
+              <Toaster />
             </ChurchProvider>
           </LanguageProvider>
         </ThemeProvider>

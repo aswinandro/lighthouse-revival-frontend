@@ -12,6 +12,7 @@ import { getToken } from "@/lib/utils"
 import { Alert } from "@/components/ui/alert"
 import { useChurch } from "@/components/providers/church-context"
 import { Calendar, DollarSign, TrendingUp, Users, ClipboardList, Lightbulb, Zap, HelpCircle } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface WeeklyReportFormProps {
     onSuccess?: () => void
@@ -60,6 +61,8 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
         }
     })
 
+    const { toast } = useToast()
+
     const onSubmit = async (data: any) => {
         setLoading(true)
         setError("")
@@ -101,11 +104,21 @@ export function WeeklyReportForm({ onSuccess }: WeeklyReportFormProps) {
 
             await apiClient.createWeeklyReport(reportData, token)
             setSuccess(true)
+            toast({
+                title: "Success",
+                description: "Weekly report submitted successfully",
+            })
             reset()
             if (onSuccess) onSuccess()
         } catch (e: any) {
             console.error(e)
-            setError(e.message || "Failed to submit report")
+            const errorMsg = e.message || "Failed to submit report"
+            setError(errorMsg)
+            toast({
+                title: "Error",
+                description: errorMsg,
+                variant: "destructive",
+            })
         } finally {
             setLoading(false)
         }

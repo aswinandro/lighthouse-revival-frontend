@@ -14,6 +14,8 @@ import React, { useEffect, useState } from "react"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { PhoneInput } from "@/components/ui/phone-input"
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 
 type Church = {
   id: string
@@ -40,7 +42,7 @@ export function ChurchesManagement() {
   const [users, setUsers] = useState<User[]>([])
   const [allSystemUsers, setAllSystemUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const { toast } = useToast()
 
   // Form states
   const [churchForm, setChurchForm] = useState({
@@ -66,33 +68,35 @@ export function ChurchesManagement() {
   // Fetch all churches
   async function loadChurches() {
     setLoading(true)
-    setError("")
     try {
       const token = getToken()
-      if (!token) throw new Error("No token found")
+      if (!token) return
 
       const data: any = await apiClient.getChurches(token)
       setChurches(data.data || [])
     } catch (e) {
       console.error(e)
-      setError("Failed to load churches")
+      toast({
+        title: "Error",
+        description: "Failed to load churches",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  // Fetch all users for selected church (for now, fetch for first church)
+  // Fetch all users for selected church
   async function loadUsers(churchId: string) {
     try {
       if (!churchId) return setUsers([])
       const token = getToken()
-      if (!token) throw new Error("No token found")
+      if (!token) return
 
       const data: any = await apiClient.getChurchUsers(churchId, token)
       setUsers(data.data || [])
     } catch (e) {
       console.error(e)
-      // Don't set error here as it might be common if no users yet
     }
   }
 
@@ -133,6 +137,7 @@ export function ChurchesManagement() {
   }, [selectedChurchForUsers])
 
   const handleAddChurch = async () => {
+    setLoading(true)
     try {
       const token = getToken()
       if (!token) return
@@ -146,10 +151,20 @@ export function ChurchesManagement() {
         phone: "",
         email: ""
       })
+      toast({
+        title: "Success",
+        description: "Church created successfully",
+      })
       loadChurches()
     } catch (e) {
       console.error(e)
-      setError("Failed to create church")
+      toast({
+        title: "Error",
+        description: "Failed to create church",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -158,7 +173,11 @@ export function ChurchesManagement() {
       const token = getToken()
       if (!token) return
       if (!assignmentForm.userId || !assignmentForm.churchId) {
-        setError("Please select both a user and a church")
+        toast({
+          title: "Incomplete",
+          description: "Please select both a user and a church",
+          variant: "destructive",
+        })
         return
       }
       await apiClient.assignUserToChurch(assignmentForm.churchId, {
@@ -166,23 +185,42 @@ export function ChurchesManagement() {
         role: assignmentForm.role
       }, token)
       setIsAssignUserOpen(false)
+      toast({
+        title: "Assigned",
+        description: "User assigned to church successfully",
+      })
       loadUsers(assignmentForm.churchId)
     } catch (e) {
       console.error(e)
-      setError("Failed to assign user")
+      toast({
+        title: "Error",
+        description: "Failed to assign user",
+        variant: "destructive",
+      })
     }
   }
 
   const handleDeleteChurch = async (id: string) => {
     if (!confirm("Are you sure you want to delete this church? This will remove all associated data.")) return
+    setLoading(true)
     try {
       const token = getToken()
       if (!token) return
       await apiClient.deleteChurch(id, token)
+      toast({
+        title: "Deleted",
+        description: "Church deleted successfully",
+      })
       loadChurches()
     } catch (e) {
       console.error(e)
-      setError("Failed to delete church")
+      toast({
+        title: "Error",
+        description: "Failed to delete church",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -195,10 +233,18 @@ export function ChurchesManagement() {
       if (!church) return
 
       await apiClient.unassignUserFromChurch(church.id, userId, token)
+      toast({
+        title: "Unassigned",
+        description: "User unassigned successfully",
+      })
       loadUsers(church.id)
     } catch (e) {
       console.error(e)
-      setError("Failed to unassign user")
+      toast({
+        title: "Error",
+        description: "Failed to unassign user",
+        variant: "destructive",
+      })
     }
   }
 
@@ -208,10 +254,10 @@ export function ChurchesManagement() {
 
   const handleEditChurch = async () => {
     if (!editingChurch) return
+    setLoading(true)
     try {
       const token = getToken()
       if (!token) return
-      // Map frontend fields back to backend if necessary
       const updateData = {
         name: editingChurch.name,
         city: editingChurch.city,
@@ -222,10 +268,20 @@ export function ChurchesManagement() {
       }
       await apiClient.updateChurch(editingChurch.id, updateData, token)
       setIsEditChurchOpen(false)
+      toast({
+        title: "Updated",
+        description: "Church updated successfully",
+      })
       loadChurches()
     } catch (e) {
       console.error(e)
-      setError("Failed to update church")
+      toast({
+        title: "Error",
+        description: "Failed to update church",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -248,11 +304,28 @@ export function ChurchesManagement() {
         role: editRoleForm
       }, token)
       setIsEditAssignmentOpen(false)
+      toast({
+        title: "Updated",
+        description: "User role updated successfully",
+      })
       loadUsers(selectedChurchForUsers)
     } catch (e) {
       console.error(e)
-      setError("Failed to update assignment")
+      toast({
+        title: "Error",
+        description: "Failed to update assignment",
+        variant: "destructive",
+      })
     }
+  }
+
+  if (loading && churches.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Establishing foundations...</p>
+      </div>
+    )
   }
 
   return (
@@ -337,7 +410,7 @@ export function ChurchesManagement() {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsAddChurchOpen(false)}>Cancel</Button>
-                <Button onClick={handleAddChurch}>Create Church</Button>
+                <Button onClick={handleAddChurch} disabled={loading}>{loading ? "Creating..." : "Create Church"}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -392,58 +465,68 @@ export function ChurchesManagement() {
           <CardTitle>All Churches</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Church Name</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Members</TableHead>
-                <TableHead>Attendance</TableHead>
-                <TableHead>Income</TableHead>
-                <TableHead>Expenses</TableHead>
-                <TableHead>Net</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {churches.map((church) => (
-                <TableRow key={church.id}>
-                  <TableCell className="font-medium">{church.name}</TableCell>
-                  <TableCell>
-                    {church.city}, {church.country}
-                  </TableCell>
-                  <TableCell>{church.members}</TableCell>
-                  <TableCell>{church.attendance}</TableCell>
-                  <TableCell className="text-green-600">${(church.income ?? 0).toLocaleString()}</TableCell>
-                  <TableCell className="text-red-600">${(church.expenses ?? 0).toLocaleString()}</TableCell>
-                  <TableCell className="font-bold">${((church.income ?? 0) - (church.expenses ?? 0)).toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Badge variant="default">{church.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => {
-                        setViewingChurch(church)
-                        setIsViewChurchOpen(true)
-                      }}>
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => {
-                        setEditingChurch(church)
-                        setIsEditChurchOpen(true)
-                      }}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteChurch(church.id)}>
-                        <XCircle className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Church Name</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Members</TableHead>
+                  <TableHead>Attendance</TableHead>
+                  <TableHead>Income</TableHead>
+                  <TableHead>Expenses</TableHead>
+                  <TableHead>Net</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {churches.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      No churches found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  churches.map((church) => (
+                    <TableRow key={church.id}>
+                      <TableCell className="font-medium">{church.name}</TableCell>
+                      <TableCell>
+                        {church.city}, {church.country}
+                      </TableCell>
+                      <TableCell>{church.members || 0}</TableCell>
+                      <TableCell>{church.attendance || 0}</TableCell>
+                      <TableCell className="text-green-600">${(church.income ?? 0).toLocaleString()}</TableCell>
+                      <TableCell className="text-red-600">${(church.expenses ?? 0).toLocaleString()}</TableCell>
+                      <TableCell className="font-bold">${((church.income ?? 0) - (church.expenses ?? 0)).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Badge variant="default">{church.status || 'Active'}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            setViewingChurch(church)
+                            setIsViewChurchOpen(true)
+                          }}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            setEditingChurch(church)
+                            setIsEditChurchOpen(true)
+                          }}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteChurch(church.id)}>
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -528,45 +611,55 @@ export function ChurchesManagement() {
           </Dialog>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Church</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.church}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="capitalize bg-primary/10 text-primary border-primary/20">
-                      {formatRole(user.role)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => {
-                        setEditingAssignment(user)
-                        setEditRoleForm(user.role)
-                        setIsEditAssignmentOpen(true)
-                      }}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleUnassignUser(user.id, user.church)}>
-                        <XCircle className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Church</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      No users assigned to this church yet.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.church}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize bg-primary/10 text-primary border-primary/20">
+                          {formatRole(user.role)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            setEditingAssignment(user)
+                            setEditRoleForm(user.role)
+                            setIsEditAssignmentOpen(true)
+                          }}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleUnassignUser(user.id, user.church)}>
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
       {/* Edit Church Dialog */}
@@ -631,7 +724,7 @@ export function ChurchesManagement() {
               </div>
               <div className="flex justify-end gap-2 text-primary-foreground">
                 <Button variant="outline" className="text-foreground" onClick={() => setIsEditChurchOpen(false)}>Cancel</Button>
-                <Button onClick={handleEditChurch}>Update Church</Button>
+                <Button onClick={handleEditChurch} disabled={loading}>{loading ? "Updating..." : "Update Church"}</Button>
               </div>
             </div>
           )}
@@ -687,7 +780,7 @@ export function ChurchesManagement() {
                   <Label className="text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">Status</Label>
                   <div>
                     <Badge className={viewingChurch.status === 'Active' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-slate-700 text-slate-400 border-slate-600'}>
-                      {viewingChurch.status}
+                      {viewingChurch.status || 'Active'}
                     </Badge>
                   </div>
                 </div>
@@ -724,7 +817,7 @@ export function ChurchesManagement() {
                   <p className="text-lg font-black text-red-400">${(viewingChurch.expenses || 0).toLocaleString()}</p>
                 </div>
                 <div className="p-3 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
-                  <p className="text-[10px] text-indigo-400/70 font-bold uppercase tracking-tight">Net Profit</p>
+                  <p className="text-[10px] text-indigo-400/70 font-bold uppercase tracking-tight">Net Balance</p>
                   <p className="text-lg font-black text-indigo-400">
                     ${((viewingChurch.income || 0) - (viewingChurch.expenses || 0)).toLocaleString()}
                   </p>

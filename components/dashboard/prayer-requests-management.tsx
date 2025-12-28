@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,8 +12,8 @@ import { MessageSquare, Eye, Heart, Clock, CheckCircle, Mail, Phone, Plus } from
 import { Input } from "@/components/ui/input"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
-import { useEffect } from "react"
-
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 import { useChurch } from "@/components/providers/church-context"
 
 export function PrayerRequestsManagement() {
@@ -21,6 +21,7 @@ export function PrayerRequestsManagement() {
   const [prayerRequests, setPrayerRequests] = useState<any[]>([])
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
   const [newRequestOpen, setNewRequestOpen] = useState(false)
   const [members, setMembers] = useState<any[]>([])
   const [newRequest, setNewRequest] = useState({
@@ -44,6 +45,11 @@ export function PrayerRequestsManagement() {
       setPrayerRequests(data.data || [])
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to load prayer requests",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -72,12 +78,21 @@ export function PrayerRequestsManagement() {
       const token = getToken()
       if (!token) return
       await apiClient.updatePrayerRequest(id, { status }, token)
+      toast({
+        title: "Status Updated",
+        description: `Request status changed to ${status}`,
+      })
       fetchRequests()
       if (selectedRequest && selectedRequest.id === id) {
         setSelectedRequest({ ...selectedRequest, status })
       }
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Update Failed",
+        description: "Could not change request status",
+        variant: "destructive",
+      })
     }
   }
 
@@ -86,16 +101,26 @@ export function PrayerRequestsManagement() {
       const token = getToken()
       if (!token) return
       await apiClient.updatePrayerRequest(id, { assignedTo }, token)
+      toast({
+        title: "Assigned",
+        description: "Prayer request assigned successfully",
+      })
       fetchRequests()
       if (selectedRequest && selectedRequest.id === id) {
         setSelectedRequest({ ...selectedRequest, assignedTo })
       }
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Assignment Failed",
+        description: "Could not assign prayer request",
+        variant: "destructive",
+      })
     }
   }
 
   const handleCreateRequest = async () => {
+    setLoading(true)
     try {
       const token = getToken()
       if (!token) return
@@ -117,9 +142,20 @@ export function PrayerRequestsManagement() {
         priority: "Medium",
         message: ""
       })
+      toast({
+        title: "Success",
+        description: "Prayer request submitted. We are praying for you!",
+      })
       fetchRequests()
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Submission Failed",
+        description: "Could not submit prayer request",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -167,6 +203,15 @@ export function PrayerRequestsManagement() {
   }
 
   const isAdmin = userRole === 'super_admin' || userRole === 'church_pastor'
+
+  if (loading && prayerRequests.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Lifting up requests to Heaven...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -247,7 +292,7 @@ export function PrayerRequestsManagement() {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setNewRequestOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateRequest}>Submit Request</Button>
+                <Button onClick={handleCreateRequest} disabled={loading}>{loading ? "Submitting..." : "Submit Request"}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -322,157 +367,158 @@ export function PrayerRequestsManagement() {
                   <TableHead>Priority</TableHead>
                   <TableHead>Status</TableHead>
                   {isAdmin && <TableHead>Assigned To</TableHead>}
-                  <TableHead>Submitted</TableHead>
+                  <TableHead>Submitted At</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {prayerRequests.map((request) => (
-                  <TableRow key={request.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{request.name}</div>
-                        <div className="text-sm text-muted-foreground">{request.email}</div>
-                      </div>
+                {prayerRequests.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                      No prayer requests found.
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getCategoryIcon(request.category)}
-                        <span className="text-sm">{request.category}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-xs truncate">{request.subject}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getPriorityColor(request.priority)}>{request.priority}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(request.status)}>{request.status}</Badge>
-                    </TableCell>
-                    {isAdmin && <TableCell className="text-sm">{request.assignedTo}</TableCell>}
-                    <TableCell className="text-sm">{request.submittedAt}</TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm" onClick={() => setSelectedRequest(request)}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Prayer Request Details</DialogTitle>
-                          </DialogHeader>
-                          {selectedRequest && (
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <label className="text-sm font-medium">Name</label>
-                                  <p className="text-sm text-muted-foreground">{selectedRequest.name}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Email</label>
-                                  <p className="text-sm text-muted-foreground">{selectedRequest.email}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Phone</label>
-                                  <p className="text-sm text-muted-foreground">{selectedRequest.phone}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Category</label>
-                                  <p className="text-sm text-muted-foreground">{selectedRequest.category}</p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Priority</label>
-                                  <Badge className={getPriorityColor(selectedRequest.priority)}>
-                                    {selectedRequest.priority}
-                                  </Badge>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium">Status</label>
-                                  <Badge className={getStatusColor(selectedRequest.status)}>
-                                    {selectedRequest.status}
-                                  </Badge>
-                                </div>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Subject</label>
-                                <p className="text-sm text-muted-foreground mt-1">{selectedRequest.subject}</p>
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Prayer Request</label>
-                                <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-                                  {selectedRequest.message}
-                                </p>
-                              </div>
-                              {isAdmin && (
+                  </TableRow>
+                ) : (
+                  prayerRequests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{request.name}</div>
+                          <div className="text-sm text-muted-foreground">{request.email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getCategoryIcon(request.category)}
+                          <span className="text-sm">{request.category}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs truncate">{request.subject}</div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getPriorityColor(request.priority)}>{request.priority}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(request.status)}>{request.status}</Badge>
+                      </TableCell>
+                      {isAdmin && <TableCell className="text-sm">{request.assignedTo}</TableCell>}
+                      <TableCell className="text-sm">{new Date(request.created_at || request.submittedAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedRequest(request)}>
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                              <DialogTitle>Prayer Request Details</DialogTitle>
+                            </DialogHeader>
+                            {selectedRequest && (
+                              <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
-                                    <label className="text-sm font-medium">Assigned To</label>
-                                    <Select
-                                      value={selectedRequest.assignedTo}
-                                      onValueChange={(value) => handleAssign(selectedRequest.id, value)}
-                                    >
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="Unassigned">Unassigned</SelectItem>
-                                        {members.map(member => (
-                                          <SelectItem key={member.id} value={member.id}>
-                                            {member.name}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                    <label className="text-sm font-medium">Name</label>
+                                    <p className="text-sm text-muted-foreground">{selectedRequest.name}</p>
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium">Email</label>
+                                    <p className="text-sm text-muted-foreground">{selectedRequest.email}</p>
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium">Phone</label>
+                                    <p className="text-sm text-muted-foreground">{selectedRequest.phone}</p>
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium">Category</label>
+                                    <p className="text-sm text-muted-foreground">{selectedRequest.category}</p>
+                                  </div>
+                                  <div>
+                                    <label className="text-sm font-medium">Priority</label>
+                                    <Badge className={getPriorityColor(selectedRequest.priority)}>
+                                      {selectedRequest.priority}
+                                    </Badge>
                                   </div>
                                   <div>
                                     <label className="text-sm font-medium">Status</label>
-                                    <Select
-                                      value={selectedRequest.status}
-                                      onValueChange={(value) => handleUpdateStatus(selectedRequest.id, value)}
-                                    >
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="New">New</SelectItem>
-                                        <SelectItem value="In Progress">In Progress</SelectItem>
-                                        <SelectItem value="Follow-up">Follow-up</SelectItem>
-                                        <SelectItem value="Completed">Completed</SelectItem>
-                                      </SelectContent>
-                                    </Select>
+                                    <Badge className={getStatusColor(selectedRequest.status)}>
+                                      {selectedRequest.status}
+                                    </Badge>
                                   </div>
                                 </div>
-                              )}
-                              {isAdmin && (
-                                <>
-                                  <div>
-                                    <label className="text-sm font-medium">Response Notes</label>
-                                    <Textarea
-                                      placeholder="Add notes about follow-up actions or prayer responses..."
-                                      className="mt-1"
-                                    />
+                                <div>
+                                  <label className="text-sm font-medium">Subject</label>
+                                  <p className="text-sm text-muted-foreground mt-1">{selectedRequest.subject}</p>
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium">Prayer Request</label>
+                                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                                    {selectedRequest.message}
+                                  </p>
+                                </div>
+                                {isAdmin && (
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <label className="text-sm font-medium">Assigned To</label>
+                                      <Select
+                                        value={selectedRequest.assignedTo}
+                                        onValueChange={(value) => handleAssign(selectedRequest.id, value)}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="Unassigned">Unassigned</SelectItem>
+                                          {members.map(member => (
+                                            <SelectItem key={member.id} value={member.first_name + ' ' + member.last_name}>
+                                              {member.first_name} {member.last_name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Status</label>
+                                      <Select
+                                        value={selectedRequest.status}
+                                        onValueChange={(value) => handleUpdateStatus(selectedRequest.id, value)}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="New">New</SelectItem>
+                                          <SelectItem value="In Progress">In Progress</SelectItem>
+                                          <SelectItem value="Follow-up">Follow-up</SelectItem>
+                                          <SelectItem value="Completed">Completed</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
                                   </div>
-                                  <div className="flex gap-2 pt-4">
-                                    <Button className="flex-1">
-                                      <Mail className="w-4 h-4 mr-2" />
-                                      Send Response
-                                    </Button>
-                                    <Button variant="outline" className="flex-1 bg-transparent">
-                                      <Phone className="w-4 h-4 mr-2" />
-                                      Schedule Call
-                                    </Button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                                )}
+                                {isAdmin && (
+                                  <>
+                                    <div className="flex gap-2 pt-4">
+                                      <Button className="flex-1">
+                                        <Mail className="w-4 h-4 mr-2" />
+                                        Send Message
+                                      </Button>
+                                      <Button variant="outline" className="flex-1 bg-transparent">
+                                        <Phone className="w-4 h-4 mr-2" />
+                                        Call Member
+                                      </Button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </DialogContent>
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

@@ -44,12 +44,12 @@ const toastVariants = cva(
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
-    VariantProps<typeof toastVariants>
+  VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
   return (
     <ToastPrimitives.Root
       ref={ref}
-      className={cn(toastVariants({ variant }), className, "fixed !top-1/2 !left-1/2 -translate-x-1/2 -translate-y-1/2 !z-[9999] !bg-purple-500 !text-white !border-4 !border-yellow-500 !p-10 !text-2xl")} // TEMPORARY: Make it impossible to miss
+      className={cn(toastVariants({ variant }), className)}
       {...props}
     />
   )

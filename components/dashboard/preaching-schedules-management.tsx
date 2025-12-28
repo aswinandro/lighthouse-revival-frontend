@@ -13,20 +13,19 @@ import { Plus, Eye, CheckCircle } from "lucide-react"
 import { useChurch } from "@/components/providers/church-context"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
-
-
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 import React, { useEffect, useState } from "react"
 
-export default function PreachingSchedulesManagement() {
+export function PreachingSchedulesManagement() {
   const { userRole, selectedChurch, churches } = useChurch()
   const [schedules, setSchedules] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const { toast } = useToast()
+
   // Assign Topic dialog state
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [assignLoading, setAssignLoading] = useState(false)
-  const [assignSuccess, setAssignSuccess] = useState(false)
-  const [assignError, setAssignError] = useState("")
   const [form, setForm] = useState({
     church_id: "",
     assigned_pastor_id: "",
@@ -37,24 +36,25 @@ export default function PreachingSchedulesManagement() {
     super_admin_comments: "",
   })
 
-  // Pastors for selected church (fetch from /api/users for real user IDs)
+  // Pastors for selected church
   const [pastors, setPastors] = useState<{ id: string, name: string }[]>([])
+
   useEffect(() => {
     async function fetchPastors() {
       setPastors([])
       if (!form.church_id) return
       try {
         const token = getToken()
-        if (!token) return // Or handle error
+        if (!token) return
 
         const data: any = await apiClient.getUsers(token, { role: "church_pastor", churchId: form.church_id })
-        // Expecting array of users with id and name
         const usersRaw = Array.isArray(data) ? data : (data.users ?? data.data ?? [])
         setPastors(usersRaw.map((u: any) => ({
           id: String(u.id),
           name: u.name || (u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.first_name || u.last_name || ""),
         })))
-      } catch {
+      } catch (e) {
+        console.error(e)
         setPastors([])
       }
     }
@@ -64,10 +64,9 @@ export default function PreachingSchedulesManagement() {
   // Fetch schedules
   const fetchSchedules = async () => {
     setLoading(true)
-    setError("")
     try {
       const token = getToken()
-      if (!token) throw new Error("No token found")
+      if (!token) return
 
       const params: any = {}
       if (selectedChurch?.id && selectedChurch.id !== 'all') {
@@ -90,7 +89,12 @@ export default function PreachingSchedulesManagement() {
       }))
       setSchedules(mapped)
     } catch (e) {
-      setError((e as any).message || "Failed to load schedules")
+      console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to load preaching schedules",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -98,20 +102,16 @@ export default function PreachingSchedulesManagement() {
 
   useEffect(() => {
     fetchSchedules()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userRole, selectedChurch])
 
   // Assign Topic handler
   const handleAssignTopic = async () => {
     setAssignLoading(true)
-    setAssignError("")
     try {
       const token = getToken()
-      if (!token) throw new Error("No token found")
+      if (!token) return
 
       await apiClient.createPreachingSchedule(form, token)
-
-      setAssignSuccess(true)
       setAssignDialogOpen(false)
       setForm({
         church_id: "",
@@ -122,12 +122,30 @@ export default function PreachingSchedulesManagement() {
         assigned_scripture: "",
         super_admin_comments: "",
       })
+      toast({
+        title: "Success",
+        description: "Preaching topic assigned successfully",
+      })
       fetchSchedules()
     } catch (e) {
-      setAssignError((e as any).message || "Failed to assign topic")
+      console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to assign topic",
+        variant: "destructive",
+      })
     } finally {
       setAssignLoading(false)
     }
+  }
+
+  if (loading && schedules.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Orchestrating the Word...</p>
+      </div>
+    )
   }
 
   return (
@@ -141,110 +159,102 @@ export default function PreachingSchedulesManagement() {
           </p>
         </div>
         {userRole === "super_admin" && (
-          <>
-            <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2" onClick={() => setAssignDialogOpen(true)}>
-                  <Plus className="w-4 h-4" />
-                  Assign Topic
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Assign Preaching Topic</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Church</Label>
-                    <Select
-                      value={form.church_id}
-                      onValueChange={val => setForm(f => ({ ...f, church_id: val, assigned_pastor_id: "" }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select church" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {churches.map((church) => (
-                          <SelectItem key={church.id} value={church.id}>{church.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Pastor</Label>
-                    <Select
-                      value={form.assigned_pastor_id}
-                      onValueChange={val => setForm(f => ({ ...f, assigned_pastor_id: val }))}
-                      disabled={!form.church_id}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={form.church_id ? (pastors.length ? "Select pastor" : "No pastors found") : "Select church first"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {pastors.map((pastor) => (
-                          <SelectItem key={pastor.id} value={pastor.id}>{pastor.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Week Start</Label>
-                      <Input
-                        type="date"
-                        value={form.week_start_date}
-                        onChange={e => setForm(f => ({ ...f, week_start_date: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Week End</Label>
-                      <Input
-                        type="date"
-                        value={form.week_end_date}
-                        onChange={e => setForm(f => ({ ...f, week_end_date: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Topic</Label>
-                    <Input
-                      placeholder="Enter preaching topic"
-                      value={form.assigned_topic}
-                      onChange={e => setForm(f => ({ ...f, assigned_topic: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Scripture Reference</Label>
-                    <Input
-                      placeholder="e.g., John 3:16-21"
-                      value={form.assigned_scripture}
-                      onChange={e => setForm(f => ({ ...f, assigned_scripture: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Comments/Instructions</Label>
-                    <Textarea
-                      placeholder="Additional notes for the pastor"
-                      value={form.super_admin_comments}
-                      onChange={e => setForm(f => ({ ...f, super_admin_comments: e.target.value }))}
-                    />
-                  </div>
-                  {assignError && <div className="text-red-500 text-sm">{assignError}</div>}
+          <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2" onClick={() => setAssignDialogOpen(true)}>
+                <Plus className="w-4 h-4" />
+                Assign Topic
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Assign Preaching Topic</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Church</Label>
+                  <Select
+                    value={form.church_id}
+                    onValueChange={val => setForm(f => ({ ...f, church_id: val, assigned_pastor_id: "" }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select church" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {churches.map((church) => (
+                        <SelectItem key={church.id} value={church.id}>{church.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setAssignDialogOpen(false)} disabled={assignLoading}>Cancel</Button>
-                  <Button onClick={handleAssignTopic} disabled={assignLoading}>
-                    {assignLoading ? "Assigning..." : "Assign Topic"}
-                  </Button>
+                <div className="space-y-2">
+                  <Label>Pastor</Label>
+                  <Select
+                    value={form.assigned_pastor_id}
+                    onValueChange={val => setForm(f => ({ ...f, assigned_pastor_id: val }))}
+                    disabled={!form.church_id}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={form.church_id ? (pastors.length ? "Select pastor" : "No pastors found") : "Select church first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pastors.map((pastor) => (
+                        <SelectItem key={pastor.id} value={pastor.id}>{pastor.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </DialogContent>
-            </Dialog>
-            {assignSuccess && (
-              <div className="fixed top-4 right-4 z-50">
-                <div className="bg-green-600 text-white px-4 py-2 rounded shadow">Successfully assigned topic!</div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Week Start</Label>
+                    <Input
+                      type="date"
+                      value={form.week_start_date}
+                      onChange={e => setForm(f => ({ ...f, week_start_date: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Week End</Label>
+                    <Input
+                      type="date"
+                      value={form.week_end_date}
+                      onChange={e => setForm(f => ({ ...f, week_end_date: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Topic</Label>
+                  <Input
+                    placeholder="Enter preaching topic"
+                    value={form.assigned_topic}
+                    onChange={e => setForm(f => ({ ...f, assigned_topic: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Scripture Reference</Label>
+                  <Input
+                    placeholder="e.g., John 3:16-21"
+                    value={form.assigned_scripture}
+                    onChange={e => setForm(f => ({ ...f, assigned_scripture: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Comments/Instructions</Label>
+                  <Textarea
+                    placeholder="Additional notes for the pastor"
+                    value={form.super_admin_comments}
+                    onChange={e => setForm(f => ({ ...f, super_admin_comments: e.target.value }))}
+                  />
+                </div>
               </div>
-            )}
-          </>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setAssignDialogOpen(false)} disabled={assignLoading}>Cancel</Button>
+                <Button onClick={handleAssignTopic} disabled={assignLoading || !form.church_id || !form.assigned_pastor_id}>
+                  {assignLoading ? "Assigning..." : "Assign Topic"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -254,124 +264,134 @@ export default function PreachingSchedulesManagement() {
           <CardTitle>Preaching Assignments</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {userRole === "super_admin" && <TableHead>Church</TableHead>}
-                <TableHead>Pastor</TableHead>
-                <TableHead>Week</TableHead>
-                <TableHead>Assigned Topic</TableHead>
-                <TableHead>Scripture</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {schedules.map((schedule) => (
-                <TableRow key={schedule.id}>
-                  {userRole === "super_admin" && <TableCell className="font-medium">{schedule.church}</TableCell>}
-                  <TableCell>{schedule.pastor}</TableCell>
-                  <TableCell>{schedule.week}</TableCell>
-                  <TableCell>{schedule.topic}</TableCell>
-                  <TableCell className="text-sm">{schedule.scripture}</TableCell>
-                  <TableCell>
-                    <Badge variant={schedule.status === "Completed" ? "default" : "secondary"}>{schedule.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Preaching Schedule Details</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <Label className="text-sm font-medium">Week</Label>
-                                <p className="text-sm text-muted-foreground">{schedule.week}</p>
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium">Status</Label>
-                                <Badge variant={schedule.status === "Completed" ? "default" : "secondary"}>
-                                  {schedule.status}
-                                </Badge>
-                              </div>
-                            </div>
-                            <div>
-                              <Label className="text-sm font-medium">Assigned Topic</Label>
-                              <p className="text-sm text-muted-foreground mt-1">{schedule.topic}</p>
-                            </div>
-                            <div>
-                              <Label className="text-sm font-medium">Scripture</Label>
-                              <p className="text-sm text-muted-foreground mt-1">{schedule.scripture}</p>
-                            </div>
-                            <div>
-                              <Label className="text-sm font-medium">Instructions from Super Admin</Label>
-                              <p className="text-sm text-muted-foreground mt-1">{schedule.comments}</p>
-                            </div>
-                            {schedule.status === "Completed" && (
-                              <>
-                                <div>
-                                  <Label className="text-sm font-medium">Actual Topic Preached</Label>
-                                  <p className="text-sm text-muted-foreground mt-1">{schedule.actualTopic}</p>
-                                </div>
-                                <div>
-                                  <Label className="text-sm font-medium">Pastor's Notes</Label>
-                                  <p className="text-sm text-muted-foreground mt-1">{schedule.pastorNotes}</p>
-                                </div>
-                                <div>
-                                  <Label className="text-sm font-medium">Attendance</Label>
-                                  <p className="text-sm text-muted-foreground mt-1">{schedule.attendance} people</p>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      {userRole === "church_pastor" && schedule.status === "Scheduled" && (
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Complete
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Complete Preaching Report</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label>Actual Topic Preached</Label>
-                                <Input placeholder="What did you actually preach?" defaultValue={schedule.topic} />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Attendance Count</Label>
-                                <Input type="number" placeholder="Number of attendees" />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Pastor's Notes</Label>
-                                <Textarea placeholder="Share how the service went, testimonies, etc." rows={5} />
-                              </div>
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <Button variant="outline">Cancel</Button>
-                              <Button>Submit Report</Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      )}
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {userRole === "super_admin" && <TableHead>Church</TableHead>}
+                  <TableHead>Pastor</TableHead>
+                  <TableHead>Week</TableHead>
+                  <TableHead>Assigned Topic</TableHead>
+                  <TableHead>Scripture</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {schedules.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={userRole === "super_admin" ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                      No preaching schedules found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  schedules.map((schedule) => (
+                    <TableRow key={schedule.id}>
+                      {userRole === "super_admin" && <TableCell className="font-medium">{schedule.church}</TableCell>}
+                      <TableCell>{schedule.pastor}</TableCell>
+                      <TableCell>{schedule.week}</TableCell>
+                      <TableCell>{schedule.topic}</TableCell>
+                      <TableCell className="text-sm">{schedule.scripture}</TableCell>
+                      <TableCell>
+                        <Badge variant={schedule.status === "Completed" ? "default" : "secondary"}>{schedule.status}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Preaching Schedule Details</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label className="text-sm font-medium">Week</Label>
+                                    <p className="text-sm text-muted-foreground">{schedule.week}</p>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium">Status</Label>
+                                    <Badge variant={schedule.status === "Completed" ? "default" : "secondary"}>
+                                      {schedule.status}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label className="text-sm font-medium">Assigned Topic</Label>
+                                  <p className="text-sm text-muted-foreground mt-1">{schedule.topic}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-sm font-medium">Scripture</Label>
+                                  <p className="text-sm text-muted-foreground mt-1">{schedule.scripture}</p>
+                                </div>
+                                <div>
+                                  <Label className="text-sm font-medium">Instructions from Super Admin</Label>
+                                  <p className="text-sm text-muted-foreground mt-1">{schedule.comments || "No specific instructions"}</p>
+                                </div>
+                                {schedule.status === "Completed" && (
+                                  <>
+                                    <div>
+                                      <Label className="text-sm font-medium">Actual Topic Preached</Label>
+                                      <p className="text-sm text-muted-foreground mt-1">{schedule.actualTopic}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Pastor's Notes</Label>
+                                      <p className="text-sm text-muted-foreground mt-1">{schedule.pastorNotes}</p>
+                                    </div>
+                                    <div>
+                                      <Label className="text-sm font-medium">Attendance</Label>
+                                      <p className="text-sm text-muted-foreground mt-1">{schedule.attendance} people</p>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          {userRole === "church_pastor" && schedule.status === "Scheduled" && (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Complete
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Complete Preaching Report</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <Label>Actual Topic Preached</Label>
+                                    <Input placeholder="What did you actually preach?" defaultValue={schedule.topic} />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Attendance Count</Label>
+                                    <Input type="number" placeholder="Number of attendees" />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Pastor's Notes</Label>
+                                    <Textarea placeholder="Share how the service went, testimonies, etc." rows={5} />
+                                  </div>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="outline">Cancel</Button>
+                                  <Button onClick={() => toast({ title: "Coming Soon", description: "Submission functionality being finalized" })}>Submit Report</Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

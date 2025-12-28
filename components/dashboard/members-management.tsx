@@ -15,6 +15,8 @@ import { Search, Plus, Edit, Trash2, Mail, Phone, MapPin } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { PhoneInput } from "@/components/ui/phone-input"
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 
 // Define Member type
 // Define Member type
@@ -42,12 +44,13 @@ export default function MembersManagement() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   if (isChurchLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-20 bg-muted rounded-lg" />
-        <div className="h-64 bg-muted rounded-lg" />
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Gathering the community...</p>
       </div>
     )
   }
@@ -102,6 +105,11 @@ export default function MembersManagement() {
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
       setError(errorMsg || "Failed to load members");
+      toast({
+        title: "Error",
+        description: errorMsg || "Failed to load members",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -111,6 +119,15 @@ export default function MembersManagement() {
   React.useEffect(() => {
     loadMembers();
   }, [selectedChurch]);
+
+  if (loading && members.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Gathering the community...</p>
+      </div>
+    )
+  }
 
   const resetForm = () => {
     setFormData({
@@ -143,10 +160,19 @@ export default function MembersManagement() {
       await apiClient.createMember(payload, token);
       setIsAddDialogOpen(false);
       resetForm();
+      toast({
+        title: "Success",
+        description: "Member added successfully",
+      });
       await loadMembers();
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
       setError(errorMsg || "Failed to add member");
+      toast({
+        title: "Error",
+        description: errorMsg || "Failed to add member",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -160,10 +186,19 @@ export default function MembersManagement() {
       const token = getToken();
       if (!token) throw new Error("No token found");
       await apiClient.deleteMember(id, token);
+      toast({
+        title: "Deleted",
+        description: "Member removed from records",
+      });
       await loadMembers();
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
       setError(errorMsg || "Failed to delete member");
+      toast({
+        title: "Error",
+        description: errorMsg || "Failed to delete member",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -180,10 +215,19 @@ export default function MembersManagement() {
       setIsEditDialogOpen(false);
       setEditingMember(null);
       resetForm();
+      toast({
+        title: "Success",
+        description: "Member details updated",
+      });
       await loadMembers();
     } catch (e) {
       const errorMsg = typeof e === "object" && e && "message" in e ? (e as any).message : String(e);
       setError(errorMsg || "Failed to update member");
+      toast({
+        title: "Error",
+        description: errorMsg || "Failed to update member",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

@@ -12,6 +12,8 @@ import { Mail, Plus, Edit, Trash2 } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect, useState } from "react"
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 import { useChurch } from "@/components/providers/church-context"
 
 export function EmailConfigManagement() {
@@ -19,6 +21,7 @@ export function EmailConfigManagement() {
   const [loading, setLoading] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const { churches } = useChurch()
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     churchId: "",
     leaderName: "",
@@ -36,6 +39,11 @@ export function EmailConfigManagement() {
       setEmailConfigs(data.data || [])
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to load email configurations",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -46,27 +54,60 @@ export function EmailConfigManagement() {
   }, [])
 
   const handleCreateConfig = async () => {
+    setLoading(true)
     try {
       const token = getToken()
       if (!token) return
       await apiClient.createPrayerEmailConfig(formData, token)
       setCreateDialogOpen(false)
+      toast({
+        title: "Success",
+        description: "Email configuration added successfully",
+      })
       fetchConfigs()
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to create configuration",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
   const handleDeleteConfig = async (id: string) => {
     if (!confirm("Are you sure you want to delete this configuration?")) return
+    setLoading(true)
     try {
       const token = getToken()
       if (!token) return
       await apiClient.deletePrayerEmailConfig(id, token)
+      toast({
+        title: "Deleted",
+        description: "Configuration removed successfully",
+      })
       fetchConfigs()
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to delete configuration",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
+  }
+
+  if (loading && emailConfigs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Setting up the communication lines...</p>
+      </div>
+    )
   }
 
   return (
@@ -74,7 +115,7 @@ export function EmailConfigManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Prayer Request Email Configuration</h2>
+          <h2 className="text-2xl font-bold">Email Configuration</h2>
           <p className="text-muted-foreground">Configure email routing for prayer requests by church</p>
         </div>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -124,14 +165,14 @@ export function EmailConfigManagement() {
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreateConfig}>Add Configuration</Button>
+              <Button onClick={handleCreateConfig} disabled={loading}>{loading ? "Adding..." : "Add Configuration"}</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
       {/* Info Card */}
-      <Card className="border-l-4 border-l-primary">
+      <Card className="border-l-4 border-l-primary shadow-sm">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
             <Mail className="w-5 h-5 text-primary mt-0.5" />
@@ -153,47 +194,57 @@ export function EmailConfigManagement() {
           <CardTitle>Email Configurations</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Church</TableHead>
-                <TableHead>Leader Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {emailConfigs.map((config) => (
-                <TableRow key={config.id}>
-                  <TableCell className="font-medium">{config.church?.name || config.church_name || "Unknown"}</TableCell>
-                  <TableCell>{config.leader_name || config.leaderName}</TableCell>
-                  <TableCell>{config.leader_email || config.leaderEmail}</TableCell>
-                  <TableCell>{config.role}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{config.priority}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={config.isActive ? "default" : "secondary"}>
-                      {config.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="ghost" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteConfig(config.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Church</TableHead>
+                  <TableHead>Leader Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {emailConfigs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No email configurations found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  emailConfigs.map((config) => (
+                    <TableRow key={config.id}>
+                      <TableCell className="font-medium">{config.church?.name || config.church_name || "Unknown"}</TableCell>
+                      <TableCell>{config.leader_name || config.leaderName}</TableCell>
+                      <TableCell>{config.leader_email || config.leaderEmail}</TableCell>
+                      <TableCell>{config.role}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{config.priority}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={config.isActive ? "default" : "secondary"}>
+                          {config.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteConfig(config.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

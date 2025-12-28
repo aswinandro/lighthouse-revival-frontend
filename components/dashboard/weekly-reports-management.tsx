@@ -14,6 +14,8 @@ import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect, useState } from "react"
 import { WeeklyReportForm } from "./weekly-report-form"
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 
 export function WeeklyReportsManagement() {
   const { userRole, selectedChurch } = useChurch()
@@ -22,6 +24,7 @@ export function WeeklyReportsManagement() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [reviewLoading, setReviewLoading] = useState(false)
   const [feedback, setFeedback] = useState("")
+  const { toast } = useToast()
 
   const fetchReports = async () => {
     setLoading(true)
@@ -33,6 +36,11 @@ export function WeeklyReportsManagement() {
       setReports(res.data || [])
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to load reports",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -49,10 +57,18 @@ export function WeeklyReportsManagement() {
       if (!token) return
       await apiClient.reviewWeeklyReport(reportId, { status, feedback }, token)
       setFeedback("")
+      toast({
+        title: "Success",
+        description: `Report ${status} successfully`,
+      })
       fetchReports()
     } catch (e) {
       console.error(e)
-      alert("Failed to review report")
+      toast({
+        title: "Update Failed",
+        description: "Could not approve/reject the report",
+        variant: "destructive",
+      })
     } finally {
       setReviewLoading(false)
     }
@@ -65,6 +81,15 @@ export function WeeklyReportsManagement() {
       case 'Submitted': return 'bg-blue-500/10 text-blue-500 border-blue-500/20'
       default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20'
     }
+  }
+
+  if (loading && reports.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Calculating Kingdom returns...</p>
+      </div>
+    )
   }
 
   return (
@@ -94,6 +119,10 @@ export function WeeklyReportsManagement() {
                 <WeeklyReportForm
                   onSuccess={() => {
                     setCreateDialogOpen(false)
+                    toast({
+                      title: "Success",
+                      description: "Report submitted successfully",
+                    })
                     fetchReports()
                   }}
                 />

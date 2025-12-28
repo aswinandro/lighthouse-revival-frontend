@@ -10,11 +10,14 @@ import { CheckCircle, XCircle, Clock, Eye, MessageSquare, UserCheck } from "luci
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
 import { useEffect, useState } from "react"
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 
 export function NewcomersManagement() {
   const [newcomers, setNewcomers] = useState<any[]>([])
   const [selectedNewcomer, setSelectedNewcomer] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
   const fetchNewcomers = async () => {
     setLoading(true)
@@ -25,6 +28,11 @@ export function NewcomersManagement() {
       setNewcomers(data.data || [])
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to load newcomers",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -40,11 +48,20 @@ export function NewcomersManagement() {
       if (!token) return
       await apiClient.updateNewcomer(newcomerId, { status: newStatus }, token)
       fetchNewcomers()
+      toast({
+        title: "Status Updated",
+        description: `Newcomer status changed to ${newStatus}`,
+      })
       if (selectedNewcomer && selectedNewcomer.id === newcomerId) {
         setSelectedNewcomer({ ...selectedNewcomer, status: newStatus })
       }
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Update Failed",
+        description: "Could not change newcomer status",
+        variant: "destructive",
+      })
     }
   }
 
@@ -79,6 +96,15 @@ export function NewcomersManagement() {
   }
 
 
+
+  if (loading && newcomers.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Welcoming new voices...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

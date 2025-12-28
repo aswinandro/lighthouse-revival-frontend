@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,14 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Calendar, Clock, MapPin, Users, Plus, Edit, Trash2, Eye } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { getToken } from "@/lib/utils"
-import { useEffect } from "react"
-
+import { Loader } from "@/components/ui/loader"
+import { useToast } from "@/hooks/use-toast"
 import { useChurch } from "@/components/providers/church-context"
 
 export function EventsManagement() {
   const { selectedChurch, userRole } = useChurch()
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
@@ -38,12 +39,8 @@ export function EventsManagement() {
       const token = getToken()
       if (!token) return
 
-      const params = selectedChurch?.id && selectedChurch.id !== 'all'
-        ? { churchId: selectedChurch.id }
-        : {}
-
       const data: any = await apiClient.getEvents(token)
-      // Filter by church on frontend if needed, though backend should handle it if passed params
+      // Filter by church on frontend if needed
       let filtered = data.data || []
       if (selectedChurch?.id && selectedChurch.id !== 'all') {
         filtered = filtered.filter((e: any) => e.church_id === selectedChurch.id)
@@ -51,6 +48,11 @@ export function EventsManagement() {
       setEvents(filtered)
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to load events",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -60,7 +62,17 @@ export function EventsManagement() {
     fetchEvents()
   }, [selectedChurch])
 
+  if (loading && events.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Preparing the sanctuary...</p>
+      </div>
+    )
+  }
+
   const handleCreateEvent = async () => {
+    setLoading(true)
     try {
       const token = getToken()
       if (!token) return
@@ -71,7 +83,6 @@ export function EventsManagement() {
         church_id: selectedChurch?.id === 'all' ? undefined : selectedChurch?.id
       }
 
-      console.log("[EventsManagement] creating event with payload:", payload)
       await apiClient.createEvent(payload, token)
       setCreateDialogOpen(false)
       setFormData({
@@ -85,9 +96,20 @@ export function EventsManagement() {
         maxAttendees: "100",
         organizer: ""
       })
+      toast({
+        title: "Success",
+        description: "Event created successfully",
+      })
       fetchEvents()
     } catch (e) {
       console.error(e)
+      toast({
+        title: "Error",
+        description: "Failed to create event",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -121,6 +143,15 @@ export function EventsManagement() {
       default:
         return "bg-gray-100 text-gray-800"
     }
+  }
+
+  if (loading && events.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader size={80} />
+        <p className="text-sm text-muted-foreground animate-pulse">Scheduling the harvest...</p>
+      </div>
+    )
   }
 
   return (
@@ -183,7 +214,7 @@ export function EventsManagement() {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreateEvent}>Create Event</Button>
+                <Button onClick={handleCreateEvent} disabled={loading}>{loading ? "Creating..." : "Create Event"}</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -275,12 +306,12 @@ export function EventsManagement() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Registration</span>
-                  <span className="font-medium">{Math.round((event.attendees / event.maxAttendees) * 100)}%</span>
+                  <span className="font-medium">{event.maxAttendees > 0 ? Math.round((event.attendees / event.maxAttendees) * 100) : 0}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div
                     className="bg-primary h-2 rounded-full transition-all"
-                    style={{ width: `${(event.attendees / event.maxAttendees) * 100}%` }}
+                    style={{ width: `${event.maxAttendees > 0 ? (event.attendees / event.maxAttendees) * 100 : 0}%` }}
                   />
                 </div>
               </div>
